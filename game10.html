@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Game 10: Sea and Boat with Special Islands</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(to top, #004466 0%, #66ccff 100%);
+    font-family: Arial, sans-serif;
+    color: white;
+    user-select: none;
+  }
+  #ui {
+    position: fixed;
+    top: 10px; left: 10px;
+    z-index: 10;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 320px;
+  }
+  button {
+    margin-top: 6px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    background: #2288cc;
+    color: white;
+    transition: background 0.3s ease;
+  }
+  button:hover:enabled {
+    background: #66aaff;
+  }
+  button:disabled {
+    background: #555;
+    cursor: not-allowed;
+  }
+  canvas {
+    display: block;
+    background: transparent;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div>Loot: <span id="loot">0</span></div>
+  <div>Boat Speed: <span id="speedLevel">1</span></div>
+  <button id="upgradeSpeed">Upgrade Speed (Cost: 10 loot)</button>
+  <div>Loot Multiplier: <span id="lootLevel">1</span></div>
+  <button id="upgradeLoot">Upgrade Loot (Cost: 15 loot)</button>
+  <hr>
+  <div>Double Diamond Chance: <span id="diamondChanceLevel">0</span>/10</div>
+  <button id="upgradeDiamondChance">Upgrade Diamond Chance (Cost: 20 loot)</button>
+  <div>Double Emerald Chance: <span id="emeraldChanceLevel">0</span>/5</div>
+  <button id="upgradeEmeraldChance">Upgrade Emerald Chance (Cost: 50 loot)</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const boat = {
+    x: W / 4,
+    y: H * 0.75,
+    width: 80,
+    height: 40,
+    baseSpeed: 2,
+    speedLevel: 1,
+    maxSpeed: 7,
+  };
+
+  let loot = 0;
+  let lootLevel = 1;
+
+  // New upgrade levels for chances
+  let diamondChanceLevel = 0; // max 10
+  let emeraldChanceLevel = 0; // max 5
+
+  const lootEl = document.getElementById('loot');
+  const speedLevelEl = document.getElementById('speedLevel');
+  const lootLevelEl = document.getElementById('lootLevel');
+
+  const diamondChanceLevelEl = document.getElementById('diamondChanceLevel');
+  const emeraldChanceLevelEl = document.getElementById('emeraldChanceLevel');
+
+  const upgradeSpeedBtn = document.getElementById('upgradeSpeed');
+  const upgradeLootBtn = document.getElementById('upgradeLoot');
+  const upgradeDiamondChanceBtn = document.getElementById('upgradeDiamondChance');
+  const upgradeEmeraldChanceBtn = document.getElementById('upgradeEmeraldChance');
+
+  upgradeSpeedBtn.onclick = () => {
+    if (loot >= 10 * boat.speedLevel && (boat.speedLevel * boat.baseSpeed) < boat.maxSpeed) {
+      loot -= 10 * boat.speedLevel;
+      boat.speedLevel++;
+      if (boat.baseSpeed * boat.speedLevel > boat.maxSpeed) {
+        boat.speedLevel = Math.floor(boat.maxSpeed / boat.baseSpeed);
+      }
+      speedLevelEl.textContent = boat.speedLevel;
+      lootEl.textContent = loot;
+      updateButtons();
+    }
+  };
+
+  upgradeLootBtn.onclick = () => {
+    if (loot >= 15 * lootLevel) {
+      loot -= 15 * lootLevel;
+      lootLevel++;
+      lootLevelEl.textContent = lootLevel;
+      lootEl.textContent = loot;
+      updateButtons();
+    }
+  };
+
+  upgradeDiamondChanceBtn.onclick = () => {
+    if (loot >= 20 && diamondChanceLevel < 10) {
+      loot -= 20;
+      diamondChanceLevel++;
+      diamondChanceLevelEl.textContent = diamondChanceLevel;
+      lootEl.textContent = loot;
+      updateButtons();
+    }
+  };
+
+  upgradeEmeraldChanceBtn.onclick = () => {
+    if (loot >= 50 && emeraldChanceLevel < 5) {
+      loot -= 50;
+      emeraldChanceLevel++;
+      emeraldChanceLevelEl.textContent = emeraldChanceLevel;
+      lootEl.textContent = loot;
+      updateButtons();
+    }
+  };
+
+  function updateButtons() {
+    upgradeSpeedBtn.textContent = `Upgrade Speed (Cost: ${10 * boat.speedLevel} loot)`;
+    upgradeLootBtn.textContent = `Upgrade Loot (Cost: ${15 * lootLevel} loot)`;
+    upgradeDiamondChanceBtn.textContent = `Upgrade Diamond Chance (Cost: 20 loot)`;
+    upgradeEmeraldChanceBtn.textContent = `Upgrade Emerald Chance (Cost: 50 loot)`;
+
+    upgradeSpeedBtn.disabled = loot < 10 * boat.speedLevel || (boat.speedLevel * boat.baseSpeed) >= boat.maxSpeed;
+    upgradeLootBtn.disabled = loot < 15 * lootLevel;
+    upgradeDiamondChanceBtn.disabled = loot < 20 || diamondChanceLevel >= 10;
+    upgradeEmeraldChanceBtn.disabled = loot < 50 || emeraldChanceLevel >= 5;
+  }
+
+  updateButtons();
+
+  class Island {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.width = 50 + Math.random() * 150;
+      this.height = this.width * 0.4 + (Math.random() * 20);
+      this.x = W + Math.random() * 300;
+      this.y = H * 0.75 + 20;
+      this.passed = false;
+      this.lootValue = Math.floor(this.width / 20); // base ~1 to 10
+      
+      // Calculate base chances
+      // Emerald: 0.01%
+      // Diamond: 1%
+      // Golden: 10%
+      // Normal: else
+      
+      // Modify chances by upgrades:
+      // Each diamondChanceLevel doubles diamond chance, max 10 times
+      // Each emeraldChanceLevel doubles emerald chance, max 5 times
+      
+      // Base chances
+      let emeraldChance = 0.01; // percent
+      let diamondChance = 1;
+      let goldenChance = 10;
+      
+      // Apply multipliers
+      emeraldChance *= Math.pow(2, emeraldChanceLevel);
+      diamondChance *= Math.pow(2, diamondChanceLevel);
+      
+      // Cap emerald max chance so it doesn't exceed a reasonable cap (e.g. 50%)
+      emeraldChance = Math.min(emeraldChance, 50);
+      // Cap diamond max chance to 50%
+      diamondChance = Math.min(diamondChance, 50);
+      
+      const rand = Math.random() * 100;
+      if (rand < emeraldChance) {
+        this.type = 'emerald';
+        this.multiplier = 50;
+        this.color = '#50C878'; // emerald green
+      } else if (rand < emeraldChance + diamondChance) {
+        this.type = 'diamond';
+        this.multiplier = 10;
+        this.color = '#5eeaff'; // diamond blue
+      } else if (rand < emeraldChance + diamondChance + goldenChance) {
+        this.type = 'golden';
+        this.multiplier = 5;
+        this.color = '#FFD700'; // gold
+      } else {
+        this.type = 'normal';
+        this.multiplier = 1;
+        this.color = '#228B22'; // forest green
+      }
+    }
+    update(speed) {
+      this.x -= speed;
+      if (this.x + this.width < 0) this.reset();
+      if(this.x > W) this.passed = false; // reset passed on new island spawn
+    }
+    draw() {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.ellipse(this.x + this.width / 2, this.y, this.width / 2, this.height, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Glow effect for special islands
+      if (this.type !== 'normal') {
+        ctx.save();
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.ellipse(this.x + this.width / 2, this.y, this.width / 2, this.height, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+
+  const islands = [];
+  const islandCount = 5;
+  for(let i = 0; i < islandCount; i++) {
+    const island = new Island();
+    island.x += i * 400;
+    islands.push(island);
+  }
+
+  function drawBoat() {
+    ctx.save();
+    ctx.translate(boat.x, boat.y);
+    ctx.fillStyle = '#654321';
+    ctx.shadowColor = '#ffcc33';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(boat.width * 0.7, 0);
+    ctx.lineTo(boat.width, -boat.height * 0.5);
+    ctx.lineTo(boat.width * 0.7, -boat.height);
+    ctx.lineTo(0, -boat.height);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(boat.width * 0.4, -boat.height);
+    ctx.lineTo(boat.width * 0.6, -boat.height * 0.4);
+    ctx.lineTo(boat.width * 0.4, -boat.height * 0.4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+
+    const seaGradient = ctx.createLinearGradient(0, H*0.7, 0, H);
+    seaGradient.addColorStop(0, '#0066cc');
+    seaGradient.addColorStop(1, '#003366');
+    ctx.fillStyle = seaGradient;
+    ctx.fillRect(0, H*0.7, W, H*0.3);
+
+    const speed = Math.min(boat.baseSpeed * boat.speedLevel, boat.maxSpeed);
+    islands.forEach(island => {
+      island.update(speed);
+      island.draw();
+
+      if (!island.passed && island.x + island.width < boat.x) {
+        island.passed = true;
+        const lootGain = Math.floor(island.lootValue * lootLevel * island.multiplier);
+        loot += lootGain;
+        lootEl.textContent = loot;
+        updateButtons();
+      }
+    });
+
+    drawBoat();
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+</script>
+</body>
+</html>
