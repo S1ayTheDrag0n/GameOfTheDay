@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Game 9: Bouncing Balls with Sound</title>
+  <style>
+    body {
+      margin: 0;
+      background: #222;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let W, H;
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Load money sound effect
+    const moneySfx = new Audio('https://actions.google.com/sounds/v1/cash/register_cash.ogg');
+    moneySfx.volume = 0.2;
+
+    class Ball {
+      constructor(x, y, radius, vx, vy, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.vx = vx;
+        this.vy = vy;
+        this.color = color;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        let bounced = false;
+
+        if (this.x - this.radius < 0) {
+          this.x = this.radius;
+          this.vx *= -1;
+          bounced = true;
+        }
+        if (this.x + this.radius > W) {
+          this.x = W - this.radius;
+          this.vx *= -1;
+          bounced = true;
+        }
+        if (this.y - this.radius < 0) {
+          this.y = this.radius;
+          this.vy *= -1;
+          bounced = true;
+        }
+        if (this.y + this.radius > H) {
+          this.y = H - this.radius;
+          this.vy *= -1;
+          bounced = true;
+        }
+
+        if (bounced) {
+          // Play sound, clone audio so multiple playbacks can overlap
+          const sfx = moneySfx.cloneNode();
+          sfx.volume = 0.2;
+          sfx.play();
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // Create balls
+    const balls = [];
+    const colors = ['#FFD700', '#00FF00', '#00FFFF', '#FF00FF', '#FF4500', '#1E90FF'];
+    const ballCount = 20;
+
+    for (let i = 0; i < ballCount; i++) {
+      let radius = 20 + Math.random() * 10;
+      let x = radius + Math.random() * (W - 2 * radius);
+      let y = radius + Math.random() * (H - 2 * radius);
+      let vx = (Math.random() - 0.5) * 6;
+      let vy = (Math.random() - 0.5) * 6;
+      let color = colors[i % colors.length];
+      balls.push(new Ball(x, y, radius, vx, vy, color));
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, W, H);
+      balls.forEach(ball => {
+        ball.update();
+        ball.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
