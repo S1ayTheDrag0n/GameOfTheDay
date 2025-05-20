@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game 6: Color Clicker + Upgrades</title>
+  <style>
+    body {
+      margin: 0;
+      background: #121212;
+      font-family: sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+
+    #ui {
+      padding: 10px;
+      background: #1e1e1e;
+    }
+
+    #score {
+      font-size: 22px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 8px 14px;
+      background: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    button:hover {
+      background: #444;
+    }
+
+    #gameArea {
+      width: 100vw;
+      height: calc(100vh - 80px);
+      position: relative;
+    }
+
+    .circle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: hsl(0, 100%, 50%);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <span id="score">Score: 0</span>
+    <button onclick="buyUpgrade('value')">💥 +Click Value (Cost: <span id='cost-value'>20</span>)</button>
+    <button onclick="buyUpgrade('time')">⏳ +Time (Cost: <span id='cost-time'>30</span>)</button>
+    <button onclick="buyUpgrade('multi')">🌀 +Multi-Spawn (Cost: <span id='cost-multi'>50</span>)</button>
+  </div>
+
+  <div id="gameArea"></div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const scoreDisplay = document.getElementById("score");
+
+    let score = 0;
+    let clickValue = 1;
+    let spawnDelay = 1500;
+    let spawnCount = 1;
+
+    const upgrades = {
+      value: { level: 0, cost: 20 },
+      time: { level: 0, cost: 30 },
+      multi: { level: 0, cost: 50 }
+    };
+
+    function updateUI() {
+      scoreDisplay.textContent = `Score: ${score}`;
+      document.getElementById("cost-value").textContent = upgrades.value.cost;
+      document.getElementById("cost-time").textContent = upgrades.time.cost;
+      document.getElementById("cost-multi").textContent = upgrades.multi.cost;
+    }
+
+    function buyUpgrade(type) {
+      const upg = upgrades[type];
+      if (score >= upg.cost) {
+        score -= upg.cost;
+        upg.level++;
+        upg.cost = Math.floor(upg.cost * 1.8);
+        if (type === "value") clickValue++;
+        if (type === "time" && spawnDelay < 3000) spawnDelay += 250;
+        if (type === "multi") spawnCount = Math.min(spawnCount + 1, 5);
+        updateUI();
+      }
+    }
+
+    function createCircle() {
+      for (let i = 0; i < spawnCount; i++) {
+        const circle = document.createElement("div");
+        circle.className = "circle";
+        const x = Math.random() * (window.innerWidth - 50);
+        const y = Math.random() * (window.innerHeight - 130) + 80;
+        const hue = Math.floor(Math.random() * 360);
+        circle.style.left = `${x}px`;
+        circle.style.top = `${y}px`;
+        circle.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+
+        gameArea.appendChild(circle);
+
+        const timeout = setTimeout(() => {
+          if (circle.parentNode) {
+            alert("Game Over! Final Score: " + score);
+            location.reload();
+          }
+        }, spawnDelay);
+
+        circle.onclick = () => {
+          score += clickValue;
+          clearTimeout(timeout);
+          circle.remove();
+          updateUI();
+          setTimeout(createCircle, 200);
+        };
+      }
+    }
+
+    updateUI();
+    createCircle();
+  </script>
+</body>
+</html>
