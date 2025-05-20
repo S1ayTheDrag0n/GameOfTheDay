@@ -54,9 +54,9 @@
   <div>Loot Multiplier: <span id="lootLevel">1</span></div>
   <button id="upgradeLoot">Upgrade Loot (Cost: 15 loot)</button>
   <hr>
-  <div>Double Diamond Chance: <span id="diamondChanceLevel">0</span>/10</div>
+  <div>Double Diamond Chance: <span id="diamondChanceLevel">0</span>/7</div>
   <button id="upgradeDiamondChance">Upgrade Diamond Chance (Cost: 20 loot)</button>
-  <div>Double Emerald Chance: <span id="emeraldChanceLevel">0</span>/5</div>
+  <div>Double Emerald Chance: <span id="emeraldChanceLevel">0</span>/3</div>
   <button id="upgradeEmeraldChance">Upgrade Emerald Chance (Cost: 50 loot)</button>
 </div>
 
@@ -81,8 +81,8 @@
     width: 80,
     height: 40,
     baseSpeed: 2,
-    speedLevel: 1,
-    maxSpeed: 7,
+    speedLevel: 0,
+    maxSpeed: 12,
   };
 
   let loot = 0;
@@ -105,7 +105,7 @@
   const upgradeEmeraldChanceBtn = document.getElementById('upgradeEmeraldChance');
 
   upgradeSpeedBtn.onclick = () => {
-    if (loot >= 10 * boat.speedLevel && boat.speedLevel <= boat.maxSpeed) {
+    if (loot >= 10 * boat.speedLevel && boat.speedLevel < boat.maxSpeed) {
       loot -= 10 * boat.speedLevel;
       boat.speedLevel++;
       speedLevelEl.textContent = boat.speedLevel;
@@ -125,7 +125,7 @@
   };
 
   upgradeDiamondChanceBtn.onclick = () => {
-    if (loot >= 20 && diamondChanceLevel < 10) {
+    if (loot >= 20 && diamondChanceLevel < 7) {
       loot -= 20;
       diamondChanceLevel++;
       diamondChanceLevelEl.textContent = diamondChanceLevel;
@@ -135,7 +135,7 @@
   };
 
   upgradeEmeraldChanceBtn.onclick = () => {
-    if (loot >= 50 && emeraldChanceLevel < 5) {
+    if (loot >= 50 && emeraldChanceLevel < 3) {
       loot -= 50;
       emeraldChanceLevel++;
       emeraldChanceLevelEl.textContent = emeraldChanceLevel;
@@ -152,8 +152,8 @@
 
     upgradeSpeedBtn.disabled = loot < 10 * boat.speedLevel || (boat.speedLevel * boat.baseSpeed) >= boat.maxSpeed;
     upgradeLootBtn.disabled = loot < 15 * lootLevel;
-    upgradeDiamondChanceBtn.disabled = loot < 20 || diamondChanceLevel >= 10;
-    upgradeEmeraldChanceBtn.disabled = loot < 50 || emeraldChanceLevel >= 5;
+    upgradeDiamondChanceBtn.disabled = loot < 20 || diamondChanceLevel >= 7;
+    upgradeEmeraldChanceBtn.disabled = loot < 50 || emeraldChanceLevel >= 3;
   }
 
   updateButtons();
@@ -190,9 +190,9 @@
       diamondChance *= Math.pow(2, diamondChanceLevel);
       
       // Cap emerald max chance so it doesn't exceed a reasonable cap (e.g. 50%)
-      emeraldChance = Math.min(emeraldChance, 50);
+      emeraldChance = Math.min(emeraldChance, 10);
       // Cap diamond max chance to 50%
-      diamondChance = Math.min(diamondChance, 50);
+      diamondChance = Math.min(diamondChance, 10);
       
       const rand = Math.random() * 100;
       if (rand < emeraldChance) {
