@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Game 7: Glow + Draggable Physics Boxes</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      overflow: hidden;
+      user-select: none;
+    }
+    .box {
+      width: 100px;
+      height: 100px;
+      position: absolute;
+      border-radius: 12px;
+      cursor: grab;
+      transition: box-shadow 0.2s ease;
+      box-shadow: 0 0 20px #fff;
+    }
+    .box:active {
+      cursor: grabbing;
+    }
+    .red    { background: #ff3b3b; box-shadow: 0 0 20px #ff3b3b; }
+    .green  { background: #3bff5a; box-shadow: 0 0 20px #3bff5a; }
+    .blue   { background: #3b9eff; box-shadow: 0 0 20px #3b9eff; }
+    .yellow { background: #ffe53b; box-shadow: 0 0 20px #ffe53b; }
+
+    .physicsBox {
+      width: 80px;
+      height: 80px;
+      position: absolute;
+      border-radius: 8px;
+      background: #aaa;
+      box-shadow: 0 0 10px white;
+      cursor: grab;
+      transition: box-shadow 0.2s ease;
+    }
+    .physicsBox:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Drag-only glowing boxes -->
+  <div class="box red"    style="top: 50px; left: 50px;"></div>
+  <div class="box green"  style="top: 50px; left: 200px;"></div>
+  <div class="box blue"   style="top: 200px; left: 50px;"></div>
+  <div class="box yellow" style="top: 200px; left: 200px;"></div>
+
+  <!-- Physics boxes -->
+  <div class="physicsBox" id="p1" style="top:300px;left:300px;"></div>
+  <div class="physicsBox" id="p2" style="top:400px;left:100px;"></div>
+  <div class="physicsBox" id="p3" style="top:100px;left:400px;"></div>
+
+  <script>
+    // DRAG LOGIC (works for all boxes)
+    let draggedBox = null;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    // Physics data for physics boxes
+    const boxes = [
+      { el: document.getElementById('p1'), x: 300, y: 300, vx: 2, vy: 1, dragging: false },
+      { el: document.getElementById('p2'), x: 100, y: 400, vx: 1.5, vy: -2, dragging: false },
+      { el: document.getElementById('p3'), x: 400, y: 100, vx: -2, vy: 1.8, dragging: false }
+    ];
+
+    // Setup drag handlers for all boxes (.box + .physicsBox)
+    document.querySelectorAll('.box, .physicsBox').forEach(box => {
+      box.addEventListener('mousedown', startDrag);
+      box.addEventListener('touchstart', startDragTouch, { passive: false });
+    });
+
+    function startDrag(e) {
+      e.preventDefault();
+      draggedBox = e.target;
+      offsetX = e.clientX - draggedBox.offsetLeft;
+      offsetY = e.clientY - draggedBox.offsetTop;
+
+      // If physics box, mark it dragging so physics pauses
+      let physicsBox = boxes.find(b => b.el === draggedBox);
+      if (physicsBox) physicsBox.dragging = true;
+
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', stopDrag);
+    }
+
+    function drag(e) {
+      if (!draggedBox) return;
+      draggedBox.style.left = (e.clientX - offsetX) + 'px';
+      draggedBox.style.top = (e.clientY - offsetY) + 'px';
+
+      // Update physics box position if dragging
+      let physicsBox = boxes.find(b => b.el === draggedBox);
+      if (physicsBox) {
+        physicsBox.x = e.clientX - offsetX;
+        physicsBox.y = e.clientY - offsetY;
+      }
+    }
+
+    function stopDrag() {
+      if (!draggedBox) return;
+
+      // If physics box, unmark dragging and keep velocity as is
+      let physicsBox = boxes.find(b => b.el === draggedBox);
+      if (physicsBox) physicsBox.dragging = false;
+
+      draggedBox = null;
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', stopDrag);
+    }
+
+    // Touch versions
+    function startDragTouch(e) {
+      e.preventDefault();
+      draggedBox = e.target;
+      const touch = e.touches[0];
+      offsetX = touch.clientX - draggedBox.offsetLeft;
+      offsetY = touch.clientY - draggedBox.offsetTop;
+
+      let physicsBox = boxes.find(b => b.el === draggedBox);
+      if (physicsBox) physicsBox.dragging = true;
+
+      document.addEventListener('touchmove', dragTouch, { passive: false });
+      document.addEventListener('touchend', stopDragTouch);
+    }
+
+    function dragTouch(e) {
+      if (!draggedBox) return;
+      const touch = e.touches[0];
+      draggedBox.style.left = (touch.clientX - offsetX) + 'px';
+      draggedBox.style.top = (touch.clientY - offsetY) + 'px';
+
+      let physicsBox = boxes.find(b => b.el === draggedBox);
+      if (physicsBox) {
+        physicsBox.x = touch.clientX - offsetX;
+        physicsBox.y = touch.clientY - offsetY;
+      }
+    }
+
+    function stopDragTouch() {
+      if (!draggedBox) return;
+      let physicsBox = boxes.find(b => b.el === draggedBox);
+      if (physicsBox) physicsBox.dragging = false;
+      draggedBox = null;
+      document.removeEventListener('touchmove', dragTouch);
+      document.removeEventListener('touchend', stopDragTouch);
+    }
+
+    // PHYSICS LOGIC
+    const boxSize = 80;
+
+    function updatePhysics() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      for (let i = 0; i < boxes.length; i++) {
+        let a = boxes[i];
+        if (!a.dragging) {
+          a.x += a.vx;
+          a.y += a.vy;
+
+          // bounce off walls
+          if (a.x < 0) {
+            a.x = 0;
+            a.vx *= -1;
+          }
+          if (a.x + boxSize > w) {
+            a.x = w - boxSize;
+            a.vx *= -1;
+          }
+          if (a.y < 0) {
+            a.y = 0;
+            a.vy *= -1;
+          }
+          if (a.y + boxSize > h) {
+            a.y = h - boxSize;
+            a.vy *= -1;
+          }
+        }
+
+        // update position style
+        a.el.style.left = a.x + "px";
+        a.el.style.top = a.y + "px";
+      }
+
+      // Collision between physics boxes
+      for (let i = 0; i < boxes.length; i++) {
+        for (let j = i + 1; j < boxes.length; j++) {
+          let a = boxes[i];
+          let b = boxes[j];
+          if (a.dragging || b.dragging) continue; // skip collision while dragging
+
+          let dx = a.x - b.x;
+          let dy = a.y - b.y;
+          let dist = Math.sqrt(dx*dx + dy*dy);
+
+          if (dist < boxSize) {
+            // Simple elastic collision swap velocity vectors
+            let tempVX = a.vx;
+            let tempVY = a.vy;
+            a.vx = b.vx;
+            a.vy = b.vy;
+            b.vx = tempVX;
+            b.vy = tempVY;
+
+            // Push them apart a bit so they don't stick
+            let overlap = boxSize - dist;
+            let pushX = (dx / dist) * (overlap / 2);
+            let pushY = (dy / dist) * (overlap / 2);
+            a.x += pushX;
+            a.y += pushY;
+            b.x -= pushX;
+            b.y -= pushY;
+          }
+        }
+      }
+
+      requestAnimationFrame(updatePhysics);
+    }
+
+    updatePhysics();
+  </script>
+</body>
+</html>
