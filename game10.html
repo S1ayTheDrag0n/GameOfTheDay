@@ -105,7 +105,7 @@
   const upgradeEmeraldChanceBtn = document.getElementById('upgradeEmeraldChance');
 
   upgradeSpeedBtn.onclick = () => {
-    if (loot >= 10 * boat.speedLevel && (boat.speedLevel * boat.baseSpeed) < boat.maxSpeed) {
+    if (loot >= 10 * boat.speedLevel && boat.speedLevel <= boat.maxSpeed) {
       loot -= 10 * boat.speedLevel;
       boat.speedLevel++;
       if (boat.baseSpeed * boat.speedLevel > boat.maxSpeed) {
