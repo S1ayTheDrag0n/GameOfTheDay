@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Game of the Day</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      background: #222; color: white; font-family: sans-serif;
+    }
+    iframe {
+      width: 90vw; height: 90vh;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.8);
+    }
+  </style>
+</head>
+<body>
+  <iframe id="gameFrame" src=""></iframe>
+
+  <script>
+    const games = [
+      "game1.html",
+      "game2.html",
+      "game3.html",
+      "game4.html",
+      "game5.html",
+      "game6.html",
+      "game7.html",
+      "game8.html",
+      "game9.html",
+      "game10.html"
+    ];
+    const today = new Date();
+    const startDate = new Date(2025, 0, 1);
+    const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+    const gameIndex = diffDays % games.length;
+    const gameToLoad = games[gameIndex];
+
+    document.getElementById("gameFrame").src = gameToLoad;
+  </script>
+</body>
+</html>
