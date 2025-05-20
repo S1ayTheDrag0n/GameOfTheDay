@@ -71,7 +71,6 @@
     <button onclick="buyUpgrade('multi')">🌀 Multi-Spawn (<span id='cost-multi'>50</span>)</button>
     <button onclick="buyUpgrade('spawn')">🎇 Spawn Rate (<span id='cost-spawn'>100</span>)</button>
     <button onclick="buyUpgrade('auto')">🚀 Auto Clicker (<span id='cost-auto'>150</span>)</button>
-    <button onclick="buyUpgrade('magnet')">🧲 Magnet (<span id='cost-magnet'>200</span>)</button>
   </div>
 
   <div id="gameArea"></div>
@@ -85,14 +84,12 @@
     let spawnCount = 1;
     let spawnRate = 1000;
     let autoClickers = 0;
-    let magnetLevel = 0;
 
     const upgrades = {
       value:  { level: 0, cost: 20 },
       multi:  { level: 0, cost: 50 },
       spawn:  { level: 0, cost: 100 },
-      auto:   { level: 0, cost: 150 },
-      magnet: { level: 0, cost: 200 }
+      auto:   { level: 0, cost: 150 }
     };
 
     function updateUI() {
@@ -112,7 +109,6 @@
         if (type === "multi") spawnCount = Math.min(spawnCount + 1, 10);
         if (type === "spawn" && spawnRate > 200) spawnRate -= 100;
         if (type === "auto") autoClickers++;
-        if (type === "magnet") magnetLevel++;
         updateUI();
       }
     }
@@ -144,21 +140,6 @@
       }
     }
 
-    // Magnet pull effect
-    setInterval(() => {
-      if (magnetLevel === 0) return;
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      const circles = document.querySelectorAll(".circle");
-      circles.forEach(c => {
-        const rect = c.getBoundingClientRect();
-        const dx = (centerX - rect.left - 25) * 0.01 * magnetLevel;
-        const dy = (centerY - rect.top - 25) * 0.01 * magnetLevel;
-        c.style.left = `${parseFloat(c.style.left) + dx}px`;
-        c.style.top = `${parseFloat(c.style.top) + dy}px`;
-      });
-    }, 100);
-
     // Auto-clicker
     setInterval(() => {
       const allCircles = document.querySelectorAll(".circle");
@@ -167,14 +148,15 @@
       }
     }, 1000);
 
-    // Spawning loop
-    setInterval(() => {
+    // Dynamic spawn loop
+    function spawnLoop() {
       createCircle();
-    }, () => spawnRate);
+      setTimeout(spawnLoop, spawnRate);
+    }
+    spawnLoop();
 
     updateUI();
     createCircle(); // initial spawn
-    setInterval(() => createCircle(), spawnRate);
   </script>
 </body>
 </html>
