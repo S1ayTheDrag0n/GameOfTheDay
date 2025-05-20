@@ -108,9 +108,6 @@
     if (loot >= 10 * boat.speedLevel && boat.speedLevel <= boat.maxSpeed) {
       loot -= 10 * boat.speedLevel;
       boat.speedLevel++;
-      if (boat.baseSpeed * boat.speedLevel > boat.maxSpeed) {
-        boat.speedLevel = Math.floor(boat.maxSpeed / boat.baseSpeed);
-      }
       speedLevelEl.textContent = boat.speedLevel;
       lootEl.textContent = loot;
       updateButtons();
