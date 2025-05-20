@@ -50,14 +50,14 @@
 <div id="ui">
   <div>Loot: <span id="loot">0</span></div>
   <div>Boat Speed: <span id="speedLevel">1</span></div>
-  <button id="upgradeSpeed">Upgrade Speed (Capped at 100)</button>
+  <button id="upgradeSpeed">Upgrade Speed (Free)</button>
   <div>Loot Multiplier: <span id="lootLevel">1</span></div>
-  <button id="upgradeLoot">Upgrade Loot (Free & Uncapped)</button>
+  <button id="upgradeLoot">Upgrade Loot (Free)</button>
   <hr>
-  <div>Double Diamond Chance: <span id="diamondChanceLevel">0</span>/∞</div>
-  <button id="upgradeDiamondChance">Upgrade Diamond Chance (Free & Uncapped)</button>
-  <div>Double Emerald Chance: <span id="emeraldChanceLevel">0</span>/∞</div>
-  <button id="upgradeEmeraldChance">Upgrade Emerald Chance (Free & Uncapped)</button>
+  <div>Double Diamond Chance: <span id="diamondChanceLevel">0</span></div>
+  <button id="upgradeDiamondChance">Upgrade Diamond Chance (Free)</button>
+  <div>Double Emerald Chance: <span id="emeraldChanceLevel">0</span></div>
+  <button id="upgradeEmeraldChance">Upgrade Emerald Chance (Free)</button>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -88,13 +88,14 @@
   let loot = 0;
   let lootLevel = 1;
 
-  // Upgrade levels (now uncapped except boat speed)
+  // Diamond and Emerald chance levels (no cap)
   let diamondChanceLevel = 0;
   let emeraldChanceLevel = 0;
 
   const lootEl = document.getElementById('loot');
   const speedLevelEl = document.getElementById('speedLevel');
   const lootLevelEl = document.getElementById('lootLevel');
+
   const diamondChanceLevelEl = document.getElementById('diamondChanceLevel');
   const emeraldChanceLevelEl = document.getElementById('emeraldChanceLevel');
 
@@ -103,13 +104,12 @@
   const upgradeDiamondChanceBtn = document.getElementById('upgradeDiamondChance');
   const upgradeEmeraldChanceBtn = document.getElementById('upgradeEmeraldChance');
 
-  // Free upgrades, only boat speed capped
   upgradeSpeedBtn.onclick = () => {
     if (boat.speedLevel < boat.maxSpeed) {
       boat.speedLevel++;
       speedLevelEl.textContent = boat.speedLevel;
+      updateButtons();
     }
-    updateButtons();
   };
 
   upgradeLootBtn.onclick = () => {
@@ -132,10 +132,11 @@
 
   function updateButtons() {
     upgradeSpeedBtn.disabled = boat.speedLevel >= boat.maxSpeed;
-    // All other upgrades always enabled since free and uncapped
-    upgradeLootBtn.disabled = false;
-    upgradeDiamondChanceBtn.disabled = false;
-    upgradeEmeraldChanceBtn.disabled = false;
+
+    upgradeSpeedBtn.textContent = `Upgrade Speed (Free)${boat.speedLevel >= boat.maxSpeed ? ' - MAX' : ''}`;
+    upgradeLootBtn.textContent = `Upgrade Loot (Free)`;
+    upgradeDiamondChanceBtn.textContent = `Upgrade Diamond Chance (Free)`;
+    upgradeEmeraldChanceBtn.textContent = `Upgrade Emerald Chance (Free)`;
   }
 
   updateButtons();
@@ -150,38 +151,37 @@
       this.x = W + Math.random() * 300;
       this.y = H * 0.75 + 20;
       this.passed = false;
-      this.lootValue = Math.floor(this.width / 20); // base ~1 to 10
-      
-      // Base chances
-      let emeraldChance = 0.01; // percent
+      this.lootValue = Math.floor(this.width / 20);
+
+      // Base chances (%)
+      let emeraldChance = 0.01;
       let diamondChance = 1;
       let goldenChance = 10;
-      
-      // Apply multipliers (uncapped)
+
       emeraldChance *= Math.pow(2, emeraldChanceLevel);
       diamondChance *= Math.pow(2, diamondChanceLevel);
-      
-      // Cap emerald and diamond chances to 10% max for sanity (you can adjust this if needed)
-      emeraldChance = Math.min(emeraldChance, 10);
-      diamondChance = Math.min(diamondChance, 10);
-      
+
+      // Cap chances at 70%
+      emeraldChance = Math.min(emeraldChance, 70);
+      diamondChance = Math.min(diamondChance, 70);
+
       const rand = Math.random() * 100;
       if (rand < emeraldChance) {
         this.type = 'emerald';
         this.multiplier = 50;
-        this.color = '#50C878'; // emerald green
+        this.color = '#50C878';
       } else if (rand < emeraldChance + diamondChance) {
         this.type = 'diamond';
         this.multiplier = 10;
-        this.color = '#5eeaff'; // diamond blue
+        this.color = '#5eeaff';
       } else if (rand < emeraldChance + diamondChance + goldenChance) {
         this.type = 'golden';
         this.multiplier = 5;
-        this.color = '#FFD700'; // gold
+        this.color = '#FFD700';
       } else {
         this.type = 'normal';
         this.multiplier = 1;
-        this.color = '#228B22'; // forest green
+        this.color = '#228B22';
       }
     }
     update(speed) {
@@ -195,7 +195,6 @@
       ctx.ellipse(this.x + this.width / 2, this.y, this.width / 2, this.height, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Glow effect for special islands
       if (this.type !== 'normal') {
         ctx.save();
         ctx.shadowColor = this.color;
