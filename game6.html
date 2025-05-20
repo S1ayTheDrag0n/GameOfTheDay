@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Game 6: Color Clicker + Upgrades</title>
+  <title>Game 6: Color Clicker+</title>
   <style>
     body {
       margin: 0;
@@ -22,13 +22,13 @@
     }
 
     button {
-      margin: 5px;
-      padding: 8px 14px;
+      margin: 5px 5px 0 0;
+      padding: 8px 12px;
       background: #333;
       color: white;
       border: none;
-      cursor: pointer;
       border-radius: 6px;
+      cursor: pointer;
     }
 
     button:hover {
@@ -37,8 +37,9 @@
 
     #gameArea {
       width: 100vw;
-      height: calc(100vh - 80px);
+      height: calc(100vh - 100px);
       position: relative;
+      overflow: hidden;
     }
 
     .circle {
@@ -48,15 +49,29 @@
       background-color: hsl(0, 100%, 50%);
       border-radius: 50%;
       cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .circle:hover {
+      transform: scale(1.2);
+    }
+
+    .golden {
+      width: 70px;
+      height: 70px;
+      background: gold !important;
+      box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.7);
     }
   </style>
 </head>
 <body>
   <div id="ui">
-    <span id="score">Score: 0</span>
-    <button onclick="buyUpgrade('value')">💥 +Click Value (Cost: <span id='cost-value'>20</span>)</button>
-    <button onclick="buyUpgrade('time')">⏳ +Time (Cost: <span id='cost-time'>30</span>)</button>
-    <button onclick="buyUpgrade('multi')">🌀 +Multi-Spawn (Cost: <span id='cost-multi'>50</span>)</button>
+    <span id="score">Score: 0</span><br>
+    <button onclick="buyUpgrade('value')">💥 Click Value (<span id='cost-value'>20</span>)</button>
+    <button onclick="buyUpgrade('multi')">🌀 Multi-Spawn (<span id='cost-multi'>50</span>)</button>
+    <button onclick="buyUpgrade('spawn')">🎇 Spawn Rate (<span id='cost-spawn'>100</span>)</button>
+    <button onclick="buyUpgrade('auto')">🚀 Auto Clicker (<span id='cost-auto'>150</span>)</button>
+    <button onclick="buyUpgrade('magnet')">🧲 Magnet (<span id='cost-magnet'>200</span>)</button>
   </div>
 
   <div id="gameArea"></div>
@@ -67,20 +82,24 @@
 
     let score = 0;
     let clickValue = 1;
-    let spawnDelay = 1500;
     let spawnCount = 1;
+    let spawnRate = 1000;
+    let autoClickers = 0;
+    let magnetLevel = 0;
 
     const upgrades = {
-      value: { level: 0, cost: 20 },
-      time: { level: 0, cost: 30 },
-      multi: { level: 0, cost: 50 }
+      value:  { level: 0, cost: 20 },
+      multi:  { level: 0, cost: 50 },
+      spawn:  { level: 0, cost: 100 },
+      auto:   { level: 0, cost: 150 },
+      magnet: { level: 0, cost: 200 }
     };
 
     function updateUI() {
       scoreDisplay.textContent = `Score: ${score}`;
-      document.getElementById("cost-value").textContent = upgrades.value.cost;
-      document.getElementById("cost-time").textContent = upgrades.time.cost;
-      document.getElementById("cost-multi").textContent = upgrades.multi.cost;
+      for (const key in upgrades) {
+        document.getElementById(`cost-${key}`).textContent = upgrades[key].cost;
+      }
     }
 
     function buyUpgrade(type) {
@@ -88,10 +107,12 @@
       if (score >= upg.cost) {
         score -= upg.cost;
         upg.level++;
-        upg.cost = Math.floor(upg.cost * 1.8);
+        upg.cost = Math.floor(upg.cost * 1.9);
         if (type === "value") clickValue++;
-        if (type === "time" && spawnDelay < 3000) spawnDelay += 250;
-        if (type === "multi") spawnCount = Math.min(spawnCount + 1, 5);
+        if (type === "multi") spawnCount = Math.min(spawnCount + 1, 10);
+        if (type === "spawn" && spawnRate > 200) spawnRate -= 100;
+        if (type === "auto") autoClickers++;
+        if (type === "magnet") magnetLevel++;
         updateUI();
       }
     }
@@ -99,35 +120,61 @@
     function createCircle() {
       for (let i = 0; i < spawnCount; i++) {
         const circle = document.createElement("div");
-        circle.className = "circle";
-        const x = Math.random() * (window.innerWidth - 50);
-        const y = Math.random() * (window.innerHeight - 130) + 80;
-        const hue = Math.floor(Math.random() * 360);
+        const isGolden = Math.random() < 0.1;
+        circle.className = "circle" + (isGolden ? " golden" : "");
+
+        const size = isGolden ? 70 : 50;
+        const x = Math.random() * (window.innerWidth - size);
+        const y = Math.random() * (window.innerHeight - size - 100) + 80;
         circle.style.left = `${x}px`;
         circle.style.top = `${y}px`;
-        circle.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
 
-        gameArea.appendChild(circle);
-
-        const timeout = setTimeout(() => {
-          if (circle.parentNode) {
-            alert("Game Over! Final Score: " + score);
-            location.reload();
-          }
-        }, spawnDelay);
+        if (!isGolden) {
+          const hue = Math.floor(Math.random() * 360);
+          circle.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+        }
 
         circle.onclick = () => {
-          score += clickValue;
-          clearTimeout(timeout);
+          score += isGolden ? clickValue * 10 : clickValue;
           circle.remove();
           updateUI();
-          setTimeout(createCircle, 200);
         };
+
+        gameArea.appendChild(circle);
       }
     }
 
+    // Magnet pull effect
+    setInterval(() => {
+      if (magnetLevel === 0) return;
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const circles = document.querySelectorAll(".circle");
+      circles.forEach(c => {
+        const rect = c.getBoundingClientRect();
+        const dx = (centerX - rect.left - 25) * 0.01 * magnetLevel;
+        const dy = (centerY - rect.top - 25) * 0.01 * magnetLevel;
+        c.style.left = `${parseFloat(c.style.left) + dx}px`;
+        c.style.top = `${parseFloat(c.style.top) + dy}px`;
+      });
+    }, 100);
+
+    // Auto-clicker
+    setInterval(() => {
+      const allCircles = document.querySelectorAll(".circle");
+      for (let i = 0; i < autoClickers && i < allCircles.length; i++) {
+        allCircles[i].click();
+      }
+    }, 1000);
+
+    // Spawning loop
+    setInterval(() => {
+      createCircle();
+    }, () => spawnRate);
+
     updateUI();
-    createCircle();
+    createCircle(); // initial spawn
+    setInterval(() => createCircle(), spawnRate);
   </script>
 </body>
 </html>
