@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Circle Pop!</title>
+  <style>
+    body {
+      margin: 500;
+      overflow: hidden;
+      background: #111;
+      font-family: sans-serif;
+    }
+    canvas {
+      top: 50%;
+      left: 50%;
+      display: block;
+      background: #222;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 20px;
+    }
+    #gameOver {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 28px;
+      background: rgba(0,0,0,0.7);
+      padding: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<canvas id="game" width="800" height="500"></canvas>
+<div id="score">Score: 0</div>
+<div id="gameOver"></div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let circles = [];
+let score = 0;
+let missed = 0;
+let gameRunning = true;
+
+function spawnCircle() {
+  const radius = Math.random() * 20 + 20;
+  const x = Math.random() * (canvas.width - radius * 2) + radius;
+  const y = canvas.height + radius;
+  const speed = Math.random() * 1 + 1.5;
+  circles.push({ x, y, radius, speed });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let c of circles) {
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "hsl(" + Math.random() * 360 + ", 80%, 60%)";
+    ctx.fill();
+  }
+}
+
+function update() {
+  for (let c of circles) {
+    c.y -= c.speed;
+  }
+
+  // Remove missed
+  let remaining = [];
+  for (let c of circles) {
+    if (c.y + c.radius > 0) {
+      remaining.push(c);
+    } else {
+      missed++;
+      if (missed >= 5) {
+        endGame();
+      }
+    }
+  }
+  circles = remaining;
+
+  document.getElementById("score").textContent = "Score: " + score + " | Missed: " + missed;
+}
+
+function loop() {
+  if (!gameRunning) return;
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  for (let i = 0; i < circles.length; i++) {
+    const c = circles[i];
+    const dx = c.x - mouseX;
+    const dy = c.y - mouseY;
+    if (Math.sqrt(dx * dx + dy * dy) < c.radius) {
+      circles.splice(i, 1);
+      score++;
+      return;
+    }
+  }
+});
+
+function endGame() {
+  gameRunning = false;
+  document.getElementById("gameOver").innerHTML = `Game Over!<br>Score: ${score}<br><button onclick="restart()">Restart</button>`;
+  document.getElementById("gameOver").style.display = "block";
+}
+
+function restart() {
+  score = 0;
+  missed = 0;
+  circles = [];
+  gameRunning = true;
+  document.getElementById("gameOver").style.display = "none";
+  loop();
+}
+
+// Spawn circles regularly
+setInterval(() => {
+  if (gameRunning) spawnCircle();
+}, 800);
+
+loop();
+</script>
+</body>
+</html>
