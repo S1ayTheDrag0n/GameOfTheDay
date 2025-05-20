@@ -1,1 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Space Shooter - More Enemies</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      user-select: none;
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+      background: #111;
+      border: 3px solid white;
+      border-radius: 10px;
+    }
+    #hud {
+      text-align: center;
+      font-size: 20px;
+      margin: 10px;
+    }
+    #gameover {
+      text-align: center;
+      font-size: 40px;
+      color: red;
+      display: none;
+      margin-top: 20px;
+    }
+    #restartBtn {
+      display: none;
+      font-size: 22px;
+      margin: 20px auto;
+      padding: 12px 25px;
+      border: none;
+      background: crimson;
+      color: white;
+      cursor: pointer;
+      border-radius: 8px;
+      display: block;
+      width: 150px;
+    }
+    #restartBtn:hover {
+      background: darkred;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">Score: 0 | Health: 100 / 100</div>
+  <canvas id="game" width="600" height="600"></canvas>
+  <div id="gameover">GAME OVER! Final Score: <span id="finalScore">0</span></div>
+  <button id="restartBtn">Restart</button>
+
+<script>
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const hud = document.getElementById('hud');
+  const gameoverDiv = document.getElementById('gameover');
+  const finalScoreSpan = document.getElementById('finalScore');
+  const restartBtn = document.getElementById('restartBtn');
+
+  const WIDTH = canvas.width;
+  const HEIGHT = canvas.height;
+
+  // Player object
+  const player = {
+    x: WIDTH / 2,
+    y: HEIGHT / 2,
+    radius: 20,
+    speed: 5,
+    dx: 0,
+    dy: 0,
+    health: 100,
+    maxHealth: 100,
+  };
+
+  // Controls state
+  const keys = {
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+    up: false,
+    left: false,
+    down: false,
+    right: false,
+  };
+
+  // Bullets array
+  let bullets = [];
+
+  // Enemies array
+  let enemies = [];
+
+  let score = 0;
+  let gameOver = false;
+
+  // Enemy types configuration
+  const enemyTypes = [
+    { name: "Fast", speed: 3, radius: 12, health: 1, color: "orange" },
+    { name: "Tank", speed: 1, radius: 28, health: 6, color: "darkred" },
+    { name: "Normal", speed: 1.5, radius: 18, health: 3, color: "red" },
+    { name: "Runner", speed: 4, radius: 10, health: 1, color: "yellow" }
+  ];
+
+  // Bullet class
+  class Bullet {
+    constructor(x, y, angle) {
+      this.x = x;
+      this.y = y;
+      this.radius = 5;
+      this.speed = 10;
+      this.angle = angle;
+      this.dx = Math.cos(angle) * this.speed;
+      this.dy = Math.sin(angle) * this.speed;
+    }
+    update() {
+      this.x += this.dx;
+      this.y += this.dy;
+    }
+    draw() {
+      ctx.fillStyle = '#ff0';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Enemy class
+  class Enemy {
+    constructor(type, x, y) {
+      this.x = x;
+      this.y = y;
+      this.radius = type.radius;
+      this.speed = type.speed;
+      this.health = type.health;
+      this.maxHealth = type.health;
+      this.color = type.color;
+    }
+    update() {
+      // Move toward player
+      const angle = Math.atan2(player.y - this.y, player.x - this.x);
+      this.x += Math.cos(angle) * this.speed;
+      this.y += Math.sin(angle) * this.speed;
+    }
+    draw() {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+      // Health bar
+      ctx.fillStyle = 'lime';
+      ctx.fillRect(this.x - this.radius, this.y - this.radius - 10, (this.health / this.maxHealth) * this.radius * 2, 4);
+      ctx.strokeStyle = 'white';
+      ctx.strokeRect(this.x - this.radius, this.y - this.radius - 10, this.radius * 2, 4);
+    }
+  }
+
+  function drawPlayer() {
+    // Draw ship body
+    ctx.fillStyle = '#00f';
+    ctx.beginPath();
+    ctx.moveTo(player.x + player.radius, player.y);
+    ctx.lineTo(player.x - player.radius, player.y - player.radius);
+    ctx.lineTo(player.x - player.radius, player.y + player.radius);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw cockpit
+    ctx.fillStyle = '#0ff';
+    ctx.beginPath();
+    ctx.arc(player.x - player.radius / 2, player.y, player.radius / 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function clear() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  }
+
+  function movePlayer() {
+    if (keys.w || keys.up) player.y -= player.speed;
+    if (keys.s || keys.down) player.y += player.speed;
+    if (keys.a || keys.left) player.x -= player.speed;
+    if (keys.d || keys.right) player.x += player.speed;
+
+    // Boundaries
+    if (player.x < player.radius) player.x = player.radius;
+    if (player.x > WIDTH - player.radius) player.x = WIDTH - player.radius;
+    if (player.y < player.radius) player.y = player.radius;
+    if (player.y > HEIGHT - player.radius) player.y = HEIGHT - player.radius;
+  }
+
+  // Shoot bullet toward mouse position
+  let mouseX = player.x;
+  let mouseY = player.y;
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+  });
+
+  canvas.addEventListener('click', () => {
+    if (gameOver) return;
+    const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+    bullets.push(new Bullet(player.x, player.y, angle));
+  });
+
+  // Enemy spawn parameters
+  let enemySpawnInterval = 1500;
+  let enemiesPerSpawn = 1;
+
+  function spawnEnemy() {
+    for (let i = 0; i < enemiesPerSpawn; i++) {
+      const edge = Math.floor(Math.random() * 4);
+      let x, y;
+      if (edge === 0) { // top
+        x = Math.random() * WIDTH;
+        y = -30;
+      } else if (edge === 1) { // right
+        x = WIDTH + 30;
+        y = Math.random() * HEIGHT;
+      } else if (edge === 2) { // bottom
+        x = Math.random() * WIDTH;
+        y = HEIGHT + 30;
+      } else { // left
+        x = -30;
+        y = Math.random() * HEIGHT;
+      }
+      // Pick random enemy type, weighted to normal type more often
+      let typeChance = Math.random();
+      let type;
+      if (typeChance < 0.1) {
+        type = enemyTypes[1]; // Tank (6 health)
+      } else if (typeChance < 0.25) {
+        type = enemyTypes[0]; // Fast
+      } else if (typeChance < 0.3) {
+        type = enemyTypes[3]; // Runner (fastest)
+      } else {
+        type = enemyTypes[2]; // Normal (most common)
+      }
+      enemies.push(new Enemy(type, x, y));
+    }
+  }
+
+  // Collision detection helper
+  function collides(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < a.radius + b.radius;
+  }
+
+  // Healing and max health increase tracker
+  let lastHealScore = 0;
+
+  function update() {
+    if (gameOver) return;
+
+    movePlayer();
+
+    // Update bullets
+    for (let i = bullets.length -1; i >= 0; i--) {
+      bullets[i].update();
+      // Remove bullets out of bounds
+      if (
+        bullets[i].x < 0 || bullets[i].x > WIDTH ||
+        bullets[i].y < 0 || bullets[i].y > HEIGHT
+      ) {
+        bullets.splice(i, 1);
+        continue;
+      }
+      // Check collision with enemies
+      for (let j = enemies.length -1; j >= 0; j--) {
+        if (collides(bullets[i], enemies[j])) {
+          enemies[j].health--;
+          bullets.splice(i, 1);
+          if (enemies[j].health <= 0) {
+            enemies.splice(j, 1);
+            score += 10;
+
+            // Every 100 score heal or increase max health
+            if (score - lastHealScore >= 100) {
+              lastHealScore = score;
+              if (player.health < player.maxHealth) {
+                player.health = Math.min(player.health + 10, player.maxHealth);
+              } else {
+                player.maxHealth += 10;
+                player.health = player.maxHealth;
+              }
+            }
+
+            // Increase difficulty every 50 points
+            if (score % 50 === 0) {
+              if (enemySpawnInterval > 500) enemySpawnInterval -= 100;
+              if (enemiesPerSpawn < 5) enemiesPerSpawn++; // Spawn more enemies
+              clearInterval(spawnInterval);
+              spawnInterval = setInterval(spawnEnemy, enemySpawnInterval);
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    // Update enemies
+    for (let i = enemies.length -1; i >= 0; i--) {
+      enemies[i].update();
+      // Check collision with player
+      if (collides(enemies[i], player)) {
+        player.health -= 10;
+        enemies.splice(i, 1);
+        if (player.health <= 0) {
+          gameOver = true;
+          finalScoreSpan.textContent = score;
+          gameoverDiv.style.display = 'block';
+          restartBtn.style.display = 'block';
+        }
+      }
+    }
+
+    hud.textContent = `Score: ${score} | Health: ${player.health} / ${player.maxHealth}`;
+  }
+
+  function draw() {
+    clear();
+    drawPlayer();
+
+    bullets.forEach(b => b.draw());
+    enemies.forEach(e => e.draw());
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    if (!gameOver) {
+      requestAnimationFrame(gameLoop);
+    }
+  }
+
+  restartBtn.addEventListener('click', () => {
+    // Reset everything
+    score = 0;
+    player.health = 100;
+    player.maxHealth = 100;
+    player.x = WIDTH / 2;
+    player.y = HEIGHT / 2;
+    bullets = [];
+    enemies = [];
+    enemySpawnInterval = 1500;
+    enemiesPerSpawn = 1;
+    gameOver = false;
+    gameoverDiv.style.display = 'none';
+    restartBtn.style.display = 'none';
+    lastHealScore = 0;
+    clearInterval(spawnInterval);
+    spawnInterval = setInterval(spawnEnemy, enemySpawnInterval);
+    gameLoop();
+  });
+
+  // Controls
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
+    if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+    if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
+    if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
+  });
+  document.addEventListener('keyup', (e) => {
+    if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
+    if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+    if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
+    if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
+  });
+
+  // Start the game loop
+  let spawnInterval = setInterval(spawnEnemy, enemySpawnInterval);
+  gameLoop();
+</script>
+</body>
+</html>
 
