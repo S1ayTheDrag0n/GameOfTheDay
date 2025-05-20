@@ -2,261 +2,273 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Special Cake Game - Hunger & Thirst</title>
+<title>Special Cake - Hunger, Thirst & HOTTT</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #222;
-    color: white;
+    background: #f4f4f4;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     text-align: center;
+    padding: 20px;
     user-select: none;
-    margin: 0; padding: 20px;
   }
-  #stats {
+  h1 {
+    margin-bottom: 5px;
+  }
+  #bars {
     max-width: 400px;
-    margin: 0 auto 20px;
+    margin: 20px auto;
+    text-align: left;
   }
-  .stat {
-    margin-bottom: 15px;
+  .bar-label {
+    margin-bottom: 4px;
+    font-weight: bold;
+    font-size: 18px;
   }
   .bar {
-    background: #555;
-    border-radius: 10px;
+    background: #ddd;
+    border-radius: 8px;
+    height: 28px;
+    width: 100%;
+    margin-bottom: 20px;
     overflow: hidden;
-    height: 30px;
-    position: relative;
   }
-  .fill {
-    background: #4caf50;
+  .bar-fill {
     height: 100%;
     width: 0%;
     transition: width 0.3s ease;
+    border-radius: 8px;
   }
-  #thirst .fill {
-    background: #2196F3;
+  #hunger-fill {
+    background: #ff6347; /* tomato */
   }
-  #hottt .fill {
-    background: #f44336;
+  #thirst-fill {
+    background: #3399ff; /* blue */
   }
-  .percent {
-    position: absolute;
-    right: 10px;
-    top: 0;
-    bottom: 0;
-    line-height: 30px;
+  #hottt-fill {
+    background: #ff4500; /* orangered for hot */
+  }
+  #status {
+    font-size: 20px;
+    margin: 20px 0;
+    min-height: 28px;
     font-weight: bold;
-    text-shadow: 0 0 4px black;
+  }
+  #items {
+    max-width: 600px;
+    margin: 0 auto;
   }
   button {
-    margin: 5px;
-    padding: 10px 15px;
     font-size: 16px;
-    cursor: pointer;
+    margin: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
     border: none;
-    border-radius: 6px;
-    background: #4caf50;
+    cursor: pointer;
+    background: #2d8cf0;
     color: white;
-    transition: background 0.3s ease;
+    transition: background 0.2s ease;
   }
-  button:hover {
-    background: #66bb6a;
+  button:hover:enabled {
+    background: #1a6ed8;
   }
-  #uncapBtn {
-    background: #ff9800;
+  button:disabled {
+    background: #999;
+    cursor: not-allowed;
   }
-  #uncapBtn:hover {
-    background: #ffb74d;
-  }
-  #statusMsg {
-    margin-top: 15px;
-    font-size: 18px;
-    min-height: 24px;
+  #cooldownMsg {
+    color: #d33;
+    font-weight: bold;
+    margin-top: 10px;
   }
 </style>
 </head>
 <body>
 
-<h1>Special Cake Game - Hunger & Thirst</h1>
+<h1>Hunger, Thirst & HOTTT Simulator</h1>
 
-<div id="stats">
-  <div class="stat" id="hunger">
-    Hunger
-    <div class="bar"><div class="fill" id="hungerFill"></div><span class="percent" id="hungerPercent">100%</span></div>
-  </div>
-  <div class="stat" id="thirst">
-    Thirst
-    <div class="bar"><div class="fill" id="thirstFill"></div><span class="percent" id="thirstPercent">100%</span></div>
-  </div>
-  <div class="stat" id="hottt">
-    HOTTT (Burning)
-    <div class="bar"><div class="fill" id="hotttFill"></div><span class="percent" id="hotttPercent">0%</span></div>
-  </div>
+<div id="bars">
+  <div class="bar-label">Hunger: <span id="hungerPercent">50%</span></div>
+  <div class="bar"><div id="hunger-fill" class="bar-fill"></div></div>
+
+  <div class="bar-label">Thirst: <span id="thirstPercent">50%</span></div>
+  <div class="bar"><div id="thirst-fill" class="bar-fill"></div></div>
+
+  <div class="bar-label">HOTTT: <span id="hotttPercent">0%</span></div>
+  <div class="bar"><div id="hottt-fill" class="bar-fill"></div></div>
 </div>
 
-<div id="foods">
-  <button id="eatCake">Eat Cake (+30% Food, -10% Water)</button>
-  <button id="eatPizza">Eat Pizza (+25% Food, -5% Water, +10% HOTTT)</button>
-  <button id="drinkWater">Drink Water (+30% Water)</button>
-  <button id="drinkJuice">Drink Juice (+25-35% Water, -5% Food)</button>
-  <button id="eatWatermelon">Eat Watermelon (+20% Food, +10% Water)</button>
+<div id="items">
+  <button id="cakeBtn">Eat Cake (+30% hunger, -10% thirst)</button>
+  <button id="pizzaBtn">Eat Pizza (+25% hunger, -5% thirst, +10% HOTTT)</button>
+  <button id="waterBtn">Drink Water (+30% thirst)</button>
+  <button id="juiceBtn">Drink Juice (+25–35% thirst, -5% hunger)</button>
+  <button id="watermelonBtn">Eat Watermelon (+20% hunger, +10% thirst)</button>
 </div>
 
-<button id="uncapBtn">Uncap Hunger/Thirst Over 120%</button>
-
-<div id="statusMsg"></div>
+<div id="status"></div>
+<div id="cooldownMsg"></div>
 
 <script>
-  let hunger = 100;
-  let thirst = 100;
-  let hottt = 0;
-
-  let uncapped = false;
-
-  const hungerFill = document.getElementById('hungerFill');
-  const thirstFill = document.getElementById('thirstFill');
-  const hotttFill = document.getElementById('hotttFill');
-
+  const hungerFill = document.getElementById('hunger-fill');
+  const thirstFill = document.getElementById('thirst-fill');
+  const hotttFill = document.getElementById('hottt-fill');
   const hungerPercent = document.getElementById('hungerPercent');
   const thirstPercent = document.getElementById('thirstPercent');
   const hotttPercent = document.getElementById('hotttPercent');
+  const statusEl = document.getElementById('status');
+  const cooldownMsg = document.getElementById('cooldownMsg');
+  const buttons = document.querySelectorAll('#items button');
 
-  const statusEl = document.getElementById('statusMsg');
+  // Stats in percent (start at 50%)
+  let hunger = 50;
+  let thirst = 50;
+  let hottt = 0;
+
+  // Constants
+  const MAX = 150;
+  const MIN = 0;
+
+  // Cooldown in ms for eating/drinking actions, depends on HOTTT
+  // Base cooldown 0, max cooldown 5 seconds at HOTTT=100%
+  function getCooldown() {
+    return (hottt / 100) * 5000; // ms
+  }
+
+  let lastActionTime = 0;
 
   function updateBars() {
-    if (uncapped) {
-      hungerFill.style.width = Math.min(hunger, 200) + '%';
-      thirstFill.style.width = Math.min(thirst, 200) + '%';
-      hotttFill.style.width = Math.min(hottt, 200) + '%';
-    } else {
-      hungerFill.style.width = Math.min(hunger, 100) + '%';
-      thirstFill.style.width = Math.min(thirst, 100) + '%';
-      hotttFill.style.width = Math.min(hottt, 100) + '%';
-    }
+    // Cap bars visually at MAX but internally can go over
+    const capHunger = Math.min(hunger, MAX);
+    const capThirst = Math.min(thirst, MAX);
+    const capHottt = Math.min(hottt, 100);
+
+    hungerFill.style.width = capHunger + '%';
+    thirstFill.style.width = capThirst + '%';
+    hotttFill.style.width = capHottt + '%';
+
     hungerPercent.textContent = Math.round(hunger) + '%';
     thirstPercent.textContent = Math.round(thirst) + '%';
     hotttPercent.textContent = Math.round(hottt) + '%';
   }
 
   function gameOver(message) {
-    alert("Game Over! " + message);
-    resetGame();
-  }
-
-  function resetGame() {
-    hunger = 100;
-    thirst = 100;
-    hottt = 0;
-    uncapped = false;
-    statusEl.textContent = "";
-    updateBars();
+    statusEl.textContent = "Game Over! " + message;
+    buttons.forEach(btn => btn.disabled = true);
+    cooldownMsg.textContent = "";
   }
 
   function checkGameOver() {
-    if (!uncapped) {
-      if (hunger > 120) {
-        gameOver("You ate too much and have to sit on the toilet.");
-        return true;
-      }
-      if (thirst > 120) {
-        gameOver("You drank too much and have to sit on the toilet.");
-        return true;
-      }
-      if (hottt >= 100) {
-        gameOver("You are burning up!");
-        return true;
-      }
-      if (hunger > 115 && thirst > 115) {
-        gameOver("You threw up!");
-        return true;
-      }
-    } else {
-      // uncapped mode ignores hunger/thirst > 120 game overs
-      if (hottt >= 100) {
-        gameOver("You are burning up!");
-        return true;
-      }
-      if (hunger > 115 && thirst > 115) {
-        gameOver("You threw up!");
-        return true;
-      }
-    }
-
     if (hunger < 30 || thirst < 30) {
       gameOver("You starved or dehydrated!");
       return true;
     }
-
+    if (hunger > 120 || thirst > 120) {
+      gameOver("You had to sit on the toilet!");
+      return true;
+    }
+    if (hunger > 115 && thirst > 115) {
+      gameOver("You threw up!");
+      return true;
+    }
+    if (hottt >= 100) {
+      gameOver("You are burning!");
+      return true;
+    }
     return false;
   }
 
-  function decayStats() {
-    hunger -= 2;
-    thirst -= 2;
-    hottt -= 1;
+  function canAct() {
+    const now = Date.now();
+    const cd = getCooldown();
+    if (now - lastActionTime < cd) {
+      const left = ((cd - (now - lastActionTime))/1000).toFixed(2);
+      cooldownMsg.textContent = `Cooldown: wait ${left}s (HOTTT too high!)`;
+      return false;
+    }
+    cooldownMsg.textContent = "";
+    return true;
+  }
 
-    if (hunger < 0) hunger = 0;
-    if (thirst < 0) thirst = 0;
-    if (hottt < 0) hottt = 0;
-
+  function doEatDrink(effectFn) {
+    if (!canAct()) return;
+    lastActionTime = Date.now();
+    effectFn();
     updateBars();
     checkGameOver();
   }
 
-  setInterval(decayStats, 750); // hunger and thirst decay every 750ms
+  function eatCake() {
+    doEatDrink(() => {
+      hunger += 30;
+      thirst -= 10;
+      if (thirst < MIN) thirst = MIN;
+      if (hunger > MAX) hunger = MAX;
+    });
+  }
+
+  function eatPizza() {
+    doEatDrink(() => {
+      hunger += 25;
+      thirst -= 5;
+      hottt += 10;
+      if (thirst < MIN) thirst = MIN;
+      if (hunger > MAX) hunger = MAX;
+      if (hottt > 100) hottt = 100;
+    });
+  }
+
+  function drinkWater() {
+    doEatDrink(() => {
+      thirst += 30;
+      if (thirst > MAX) thirst = MAX;
+    });
+  }
+
+  function drinkJuice() {
+    doEatDrink(() => {
+      const randomThirst = 25 + Math.floor(Math.random() * 11); // 25-35%
+      thirst += randomThirst;
+      hunger -= 5;
+      if (hunger < MIN) hunger = MIN;
+      if (thirst > MAX) thirst = MAX;
+    });
+  }
+
+  function eatWatermelon() {
+    doEatDrink(() => {
+      hunger += 20;
+      thirst += 10;
+      if (hunger > MAX) hunger = MAX;
+      if (thirst > MAX) thirst = MAX;
+    });
+  }
+
+  // Hunger & Thirst decay 2% every 750 ms
   setInterval(() => {
-    hottt -= 1;
-    if (hottt < 0) hottt = 0;
+    hunger -= 2;
+    thirst -= 2;
+    if (hunger < 0) hunger = 0;
+    if (thirst < 0) thirst = 0;
     updateBars();
     checkGameOver();
-  }, 1000); // hottt decay every 1000ms
+  }, 750);
 
-  // Food buttons
-  document.getElementById('eatCake').onclick = () => {
-    hunger += 30;
-    thirst -= 10;
-    updateBars();
-    checkGameOver();
-  };
+  // HOTTT decay 1% every 1000 ms
+  setInterval(() => {
+    if (hottt > 0) {
+      hottt -= 1;
+      if (hottt < 0) hottt = 0;
+      updateBars();
+    }
+  }, 1000);
 
-  document.getElementById('eatPizza').onclick = () => {
-    hunger += 25;
-    thirst -= 5;
-    hottt += 10;
-    if (hottt > 100) hottt = 100; // cap HOTTT max 100
-    updateBars();
-    checkGameOver();
-  };
+  document.getElementById('cakeBtn').onclick = eatCake;
+  document.getElementById('pizzaBtn').onclick = eatPizza;
+  document.getElementById('waterBtn').onclick = drinkWater;
+  document.getElementById('juiceBtn').onclick = drinkJuice;
+  document.getElementById('watermelonBtn').onclick = eatWatermelon;
 
-  document.getElementById('drinkWater').onclick = () => {
-    thirst += 30;
-    updateBars();
-    checkGameOver();
-  };
-
-  document.getElementById('drinkJuice').onclick = () => {
-    let juiceWater = 25 + Math.floor(Math.random() * 11); // 25 to 35
-    thirst += juiceWater;
-    hunger -= 5;
-    updateBars();
-    checkGameOver();
-  };
-
-  document.getElementById('eatWatermelon').onclick = () => {
-    hunger += 20;
-    thirst += 10;
-    updateBars();
-    checkGameOver();
-  };
-
-  document.getElementById('uncapBtn').onclick = () => {
-    uncapped = true;
-    statusEl.textContent = "Hunger and Thirst can now exceed 120% without game over. HOTTT game over still applies.";
-    updateBars();
-  };
-
-  // Initialize bars on load
   updateBars();
-
 </script>
 
 </body>
