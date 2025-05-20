@@ -1,1 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pixel Jetpack Dodge</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #222;
+      color: white;
+      font-family: monospace;
+      overflow: hidden;
+      user-select: none;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #111;
+      border: 3px solid #555;
+    }
+    #ui {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      font-size: 18px;
+      z-index: 1;
+    }
+    #message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      background: rgba(0,0,0,0.8);
+      padding: 20px 40px;
+      border-radius: 10px;
+      display: none;
+      font-size: 26px;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="800" height="500"></canvas>
+<div id="ui">Score: <span id="score">0</span></div>
+<div id="message">Game Over</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const WIDTH = canvas.width;
+  const HEIGHT = canvas.height;
+
+  let gameOver = false;
+  let score = 0;
+  let gravity = 0.4;
+  let thrust = -8;
+  let tick = 0;
+
+  const player = {
+    x: 100,
+    y: HEIGHT / 2,
+    width: 30,
+    height: 30,
+    velocity: 0,
+    color: "#00ffcc"
+  };
+
+  let obstacles = [];
+
+  function reset() {
+    player.y = HEIGHT / 2;
+    player.velocity = 0;
+    obstacles = [];
+    score = 0;
+    tick = 0;
+    gameOver = false;
+    document.getElementById("message").style.display = "none";
+    loop();
+  }
+
+  function drawPlayer() {
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+  }
+
+  function createObstacle() {
+    const gap = 140;
+    const topHeight = Math.random() * (HEIGHT - gap - 100) + 50;
+    const bottomY = topHeight + gap;
+    const width = 40;
+
+    obstacles.push({
+      x: WIDTH,
+      width: width,
+      top: { y: 0, height: topHeight },
+      bottom: { y: bottomY, height: HEIGHT - bottomY },
+    });
+  }
+
+  function drawObstacles() {
+    ctx.fillStyle = "#ff4444";
+    for (let o of obstacles) {
+      ctx.fillRect(o.x, o.top.y, o.width, o.top.height);
+      ctx.fillRect(o.x, o.bottom.y, o.width, o.bottom.height);
+    }
+  }
+
+  function updateObstacles() {
+    for (let o of obstacles) {
+      o.x -= 5 + Math.floor(score / 100);
+    }
+    obstacles = obstacles.filter(o => o.x + o.width > 0);
+  }
+
+  function checkCollision() {
+    for (let o of obstacles) {
+      if (
+        player.x < o.x + o.width &&
+        player.x + player.width > o.x &&
+        (player.y < o.top.y + o.top.height || player.y + player.height > o.bottom.y)
+      ) {
+        return true;
+      }
+    }
+    if (player.y < 0 || player.y + player.height > HEIGHT) return true;
+    return false;
+  }
+
+  function drawScore() {
+    document.getElementById("score").textContent = Math.floor(score);
+  }
+
+  function showGameOver() {
+    document.getElementById("message").style.display = "block";
+  }
+
+  function loop() {
+    if (gameOver) return;
+
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    tick++;
+
+    if (tick % 80 === 0) createObstacle();
+
+    player.velocity += gravity;
+    player.y += player.velocity;
+
+    if (checkCollision()) {
+      gameOver = true;
+      showGameOver();
+      return;
+    }
+
+    updateObstacles();
+    drawObstacles();
+    drawPlayer();
+
+    score += 0.5;
+    drawScore();
+
+    requestAnimationFrame(loop);
+  }
+
+  // Input
+  function boost() {
+    if (gameOver) {
+      reset();
+      return;
+    }
+    player.velocity = thrust;
+  }
+
+  window.addEventListener("keydown", e => {
+    if (e.code === "Space") boost();
+  });
+  canvas.addEventListener("mousedown", boost);
+
+  // Start
+  loop();
+})();
+</script>
+
+</body>
+</html>
 
