@@ -1,192 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Game of the Day</title>
-  <style>
-    body, html {
-      margin: 0; padding: 0; height: 100vh;
-      display: flex; justify-content: center; align-items: center;
-      background: #222; color: white; font-family: sans-serif;
-      flex-direction: column;
-    }
-    iframe {
-      width: 90vw; height: 90vh;
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.8);
-    }
-    #warning {
-      position: fixed;
-      top: 10px;
-      background: rgba(255, 255, 0, 0.2);
-      color: yellow;
-      font-weight: bold;
-      padding: 10px 20px;
-      border-radius: 8px;
-      text-shadow: 1px 1px 2px #000;
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <div id="warning"></div>
-  <iframe id="gameFrame" src=""></iframe>
+<script>
+  const games = [
+    "game1.html",
+    "game2.html",
+    "game3.html",
+    "game4.html",
+    "game5.html",
+    "game6.html",
+    "game7.html",
+    "game8.html",
+    "game9.html",
+    "game10.html"
+  ];
 
-  <script>
-    const games = [
-      "game1.html",
-      "game2.html",
-      "game3.html",
-      "game4.html",
-      "game5.html",
-      "game6.html",
-      "game7.html",
-      "game8.html",
-      "game9.html",
-      "game10.html"
-    ];
+  function getUTCMidnight() {
+    const now = new Date();
+    return new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0
+    ));
+  }
 
-    function getUTCMidnight() {
-      const now = new Date();
-      return new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate() + 1, // next day at 00:00 UTC
-        0, 0, 0
-      ));
+  function updateWarningAndReload() {
+    const now = new Date();
+    const timeToMidnight = getUTCMidnight() - now;
+
+    const warningBox = document.getElementById("warning");
+
+    if (timeToMidnight <= 10 * 60 * 1000 && timeToMidnight > 1000) {
+      warningBox.innerText = "RELOADING IN 10 MINUTES";
+      warningBox.style.display = "block";
     }
 
-    function updateWarningAndReload() {
-      const now = new Date();
-      const timeToMidnight = getUTCMidnight() - now;
-
-      const warningBox = document.getElementById("warning");
-
-      // Show "RELOADING IN 10 MINUTES"
-      if (timeToMidnight <= 10 * 60 * 1000 && timeToMidnight > 1000) {
-        warningBox.innerText = "RELOADING IN 10 MINUTES";
-        warningBox.style.display = "block";
-      }
-
-      // Reload at exactly midnight UTC
-      if (timeToMidnight <= 1000) {
-        warningBox.innerText = "RELOADING";
-        setTimeout(() => {
-          location.reload();
-        }, 1000); // wait a moment to show "RELOADING"
-      }
+    if (timeToMidnight <= 1000) {
+      warningBox.innerText = "RELOADING";
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
     }
+  }
 
-    // Load today's game (using UTC date)
+  // Special dates
+  const now = new Date();
+  const utcMonth = now.getUTCMonth() + 1;
+  const utcDay = now.getUTCDate();
+  const utcYear = now.getUTCFullYear();
+
+  const isLeapYear = (year) => (
+    (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
+  );
+
+  let special = null;
+  if ((utcMonth === 12 && (utcDay === 25 || utcDay === 31)) ||
+      (utcMonth === 1 && utcDay === 1)) {
+    special = "special-christmas.html";
+  } else if (utcMonth === 6 && utcDay === 11) {
+    special = "special-cake.html";
+  } else if (utcMonth === 2 && utcDay === 29 && isLeapYear(utcYear)) {
+    special = "special-free.html";
+  }
+
+  const iframe = document.getElementById("gameFrame");
+
+  if (special) {
+    iframe.src = special;
+  } else {
+    // Regular daily rotation
     const todayUTC = new Date(Date.UTC(
-      new Date().getUTCFullYear(),
-      new Date().getUTCMonth(),
-      new Date().getUTCDate()
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
     ));
     const startDateUTC = new Date(Date.UTC(2025, 0, 1));
     const diffDays = Math.floor((todayUTC - startDateUTC) / (1000 * 60 * 60 * 24));
     const gameIndex = diffDays % games.length;
-    document.getElementById("gameFrame").src = games[gameIndex];
+    iframe.src = games[gameIndex];
+  }
 
-    // Run the warning/reload check every second
-    setInterval(updateWarningAndReload, 1000);
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Game of the Day</title>
-  <style>
-    body, html {
-      margin: 0; padding: 0; height: 100vh;
-      display: flex; justify-content: center; align-items: center;
-      background: #222; color: white; font-family: sans-serif;
-      flex-direction: column;
-    }
-    iframe {
-      width: 90vw; height: 90vh;
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.8);
-    }
-    #warning {
-      position: fixed;
-      top: 10px;
-      background: rgba(255, 255, 0, 0.2);
-      color: yellow;
-      font-weight: bold;
-      padding: 10px 20px;
-      border-radius: 8px;
-      text-shadow: 1px 1px 2px #000;
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <div id="warning"></div>
-  <iframe id="gameFrame" src=""></iframe>
-
-  <script>
-    const games = [
-      "game1.html",
-      "game2.html",
-      "game3.html",
-      "game4.html",
-      "game5.html",
-      "game6.html",
-      "game7.html",
-      "game8.html",
-      "game9.html",
-      "game10.html"
-    ];
-
-    function getUTCMidnight() {
-      const now = new Date();
-      return new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate() + 1, // next day at 00:00 UTC
-        0, 0, 0
-      ));
-    }
-
-    function updateWarningAndReload() {
-      const now = new Date();
-      const timeToMidnight = getUTCMidnight() - now;
-
-      const warningBox = document.getElementById("warning");
-
-      // Show "RELOADING IN 10 MINUTES"
-      if (timeToMidnight <= 10 * 60 * 1000 && timeToMidnight > 1000) {
-        warningBox.innerText = "RELOADING IN 10 MINUTES";
-        warningBox.style.display = "block";
-      }
-
-      // Reload at exactly midnight UTC
-      if (timeToMidnight <= 1000) {
-        warningBox.innerText = "RELOADING";
-        setTimeout(() => {
-          location.reload();
-        }, 1000); // wait a moment to show "RELOADING"
-      }
-    }
-
-    // Load today's game (using UTC date)
-    const todayUTC = new Date(Date.UTC(
-      new Date().getUTCFullYear(),
-      new Date().getUTCMonth(),
-      new Date().getUTCDate()
-    ));
-    const startDateUTC = new Date(Date.UTC(2025, 0, 1));
-    const diffDays = Math.floor((todayUTC - startDateUTC) / (1000 * 60 * 60 * 24));
-    const gameIndex = diffDays % games.length;
-    document.getElementById("gameFrame").src = games[gameIndex];
-
-    // Run the warning/reload check every second
-    setInterval(updateWarningAndReload, 1000);
-  </script>
-</body>
-</html>
+  setInterval(updateWarningAndReload, 1000);
+</script>
