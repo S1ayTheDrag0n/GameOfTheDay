@@ -30,7 +30,7 @@
     position: fixed;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0,0,0,0.8);
+    background: rgba(53, 58, 75, 0.281);
     padding: 20px 40px;
     border-radius: 10px;
     display: none;
@@ -49,7 +49,7 @@
 
 <div id="message"></div>
 
-<canvas id="gameCanvas" width="900" height="500"></canvas>
+<canvas id="gameCanvas" width="1000" height="800"></canvas>
 
 <script>
 (() => {
@@ -73,14 +73,14 @@
 
   const gun = {
     angle: 0, // angle to mouse
-    length: 60,
+    length: 80,
   };
 
   // Zombies
   class Zombie {
     constructor() {
       this.x = WIDTH + 50 + Math.random() * 200;
-      this.y = train.y + (Math.random() * train.height * 0.8) - train.height * 0.4;
+      this.y = train.y + (Math.random() * train.height * 1) - train.height * 1;
       this.speed = 1 + Math.random() * 0.6 + distance * 0.01;
       this.radius = 20;
       this.health = 1;
@@ -106,7 +106,7 @@
       ctx.fillStyle = 'red';
       ctx.beginPath();
       ctx.arc(this.x - 7, this.y - 5, 5, 0, Math.PI * 2);
-      ctx.arc(this.x + 7, this.y - 5, 5, 0, Math.PI * 2);
+      ctx.arc(this.x + 7, this.y + 5, 5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -239,10 +239,10 @@
     }
 
     // Update distance
-    distance += 0.01; // train speed
+    distance += 0.005; // train speed
 
     // Consume fuel slowly
-    fuel -= 0.02;
+    fuel -= 0.008;
     if (fuel < 0) fuel = 0;
 
     // Spawn zombies
@@ -272,7 +272,7 @@
 
       // Show safe zone message briefly
       messageDiv.style.display = 'block';
-      messageDiv.textContent = `Safe Zone reached! Fuel refilled`;
+      messageDiv.textContent = `Checkpoint reached! Fuel refilled`;
       setTimeout(() => {
         messageDiv.style.display = 'none';
       }, 2500);
