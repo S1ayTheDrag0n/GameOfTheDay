@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Special Christmas: Snow Cleanup</title>
+<style>
+  body {
+    margin: 0;
+    background: linear-gradient(to bottom, #a0c8ff 0%, #ffffff 100%);
+    font-family: Arial, sans-serif;
+    color: #003366;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  #game {
+    margin-top: 20px;
+    width: 90vw;
+    max-width: 600px;
+    height: 400px;
+    position: relative;
+    background: #cce6ff;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #66aaff;
+    overflow: hidden;
+  }
+  #player {
+    width: 50px;
+    height: 50px;
+    background-color: brown;
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  #snow {
+    position: absolute;
+    bottom: 0;
+    left: 100%;
+    width: 300px;
+    height: 100px;
+    background: linear-gradient(to top, #e6f0ff 0%, #ffffff 100%);
+    border-radius: 40px 0 0 40px;
+    box-shadow: inset 0 0 30px #b0d4ff;
+    transition: left 0.2s;
+  }
+  #ui {
+    margin-top: 15px;
+    max-width: 600px;
+    width: 90vw;
+    background: #e0f0ffcc;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 0 15px #88bbff88;
+  }
+  button {
+    font-size: 16px;
+    padding: 8px 16px;
+    margin: 5px 10px 5px 0;
+    border: none;
+    border-radius: 6px;
+    background: #3399ff;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  button:disabled {
+    background: #aaccee;
+    cursor: not-allowed;
+  }
+  h2 {
+    margin-top: 0;
+  }
+  .status-line {
+    margin: 8px 0;
+  }
+  #restartBtn {
+    display: none;
+    background: #ff4444;
+  }
+</style>
+</head>
+<body>
+
+<h1>Special Christmas: Snow Cleanup</h1>
+<div id="game">
+  <div id="player" title="Player"></div>
+  <div id="snow" title="Snow Pile"></div>
+</div>
+
+<div id="ui">
+  <h2>Shovel Info</h2>
+  <div class="status-line">Shovel Level: <span id="shovelLevelText">Starter Gold</span></div>
+  <div class="status-line">Shovel Durability: <span id="durability">100</span> / <span id="maxDurability">100</span></div>
+  <div class="status-line">Snow Remaining: <span id="snowRemaining">1000</span></div>
+  <div class="status-line">Snow Clear Cost: <span id="clearCost">10</span></div>
+  <div class="status-line">Money: $<span id="money">0</span></div>
+  <button id="clearSnowBtn">Clear Snow</button>
+  <hr />
+  <h2>Upgrades</h2>
+  <div class="status-line">Upgrade Shovel Level (Cost: $<span id="upgradeLevelCost">200</span>)</div>
+  <button id="upgradeLevelBtn">Upgrade Shovel</button>
+  <div class="status-line">Upgrade Durability (Cost: $<span id="upgradeDurabilityCost">100</span>)</div>
+  <button id="upgradeDurabilityBtn">Upgrade Durability</button>
+  <div class="status-line">Upgrade Snow Clear Cost (Cost: $<span id="upgradeCostCost">150</span>)</div>
+  <button id="upgradeCostBtn">Upgrade Snow Clear Cost</button>
+  <div class="status-line">Upgrade Auto Shovel (Cost: $<span id="upgradeAutoCost">300</span>)</div>
+  <button id="upgradeAutoBtn">Upgrade Auto Shovel</button>
+  <div class="status-line">Auto Shovel Level: <span id="autoShovelLevel">0</span></div>
+</div>
+
+<button id="restartBtn">Restart Game</button>
+
+<script>
+const shovelLevels = [
+  "Starter Gold", "Wooden", "Stone", "Iron", "Diamond",
+  "Emerald", "Ruby", "Blackstone", "Whitestone", "Graystone"
+];
+
+let shovelLevel, maxDurability, durability, snowRemaining, snowMax, clearCost, money;
+let upgradeLevelCost, upgradeDurabilityCost, upgradeCostCost, upgradeAutoCost;
+let autoShovelLevel, autoShovelInterval;
+
+const shovelLevelText = document.getElementById('shovelLevelText');
+const durabilityText = document.getElementById('durability');
+const maxDurabilityText = document.getElementById('maxDurability');
+const snowRemainingText = document.getElementById('snowRemaining');
+const clearCostText = document.getElementById('clearCost');
+const moneyText = document.getElementById('money');
+
+const upgradeLevelCostText = document.getElementById('upgradeLevelCost');
+const upgradeDurabilityCostText = document.getElementById('upgradeDurabilityCost');
+const upgradeCostCostText = document.getElementById('upgradeCostCost');
+const upgradeAutoCostText = document.getElementById('upgradeAutoCost');
+
+const autoShovelLevelText = document.getElementById('autoShovelLevel');
+
+const clearSnowBtn = document.getElementById('clearSnowBtn');
+const upgradeLevelBtn = document.getElementById('upgradeLevelBtn');
+const upgradeDurabilityBtn = document.getElementById('upgradeDurabilityBtn');
+const upgradeCostBtn = document.getElementById('upgradeCostBtn');
+const upgradeAutoBtn = document.getElementById('upgradeAutoBtn');
+const restartBtn = document.getElementById('restartBtn');
+
+const snowDiv = document.getElementById('snow');
+
+function updateUI() {
+  shovelLevelText.textContent = shovelLevels[shovelLevel];
+  durabilityText.textContent = durability.toFixed(0);
+  maxDurabilityText.textContent = maxDurability.toFixed(0);
+  snowRemainingText.textContent = snowRemaining.toFixed(0);
+  clearCostText.textContent = clearCost.toFixed(0);
+  moneyText.textContent = money.toFixed(0);
+
+  upgradeLevelCostText.textContent = upgradeLevelCost.toFixed(0);
+  upgradeDurabilityCostText.textContent = upgradeDurabilityCost.toFixed(0);
+  upgradeCostCostText.textContent = upgradeCostCost.toFixed(0);
+  upgradeAutoCostText.textContent = upgradeAutoCost.toFixed(0);
+
+  autoShovelLevelText.textContent = autoShovelLevel;
+
+  clearSnowBtn.disabled = durability <= 0 || snowRemaining <= 0;
+  upgradeLevelBtn.disabled = money < upgradeLevelCost || shovelLevel >= shovelLevels.length - 1;
+  upgradeDurabilityBtn.disabled = money < upgradeDurabilityCost;
+  upgradeCostBtn.disabled = money < upgradeCostCost;
+  upgradeAutoBtn.disabled = money < upgradeAutoCost;
+}
+
+function checkGameOver() {
+  const canAfford = (
+    (money >= upgradeLevelCost && shovelLevel < shovelLevels.length - 1) ||
+    money >= upgradeDurabilityCost ||
+    money >= upgradeCostCost ||
+    money >= upgradeAutoCost
+  );
+
+  if (durability <= 0 && !canAfford) {
+    alert("Game Over! Your shovel is broken and you can't afford upgrades.");
+    clearSnowBtn.disabled = true;
+    upgradeLevelBtn.disabled = true;
+    upgradeDurabilityBtn.disabled = true;
+    upgradeCostBtn.disabled = true;
+    upgradeAutoBtn.disabled = true;
+    restartBtn.style.display = "inline-block";
+    if (autoShovelInterval !== null) clearInterval(autoShovelInterval);
+  }
+}
+
+function moveSnow() {
+  let leftPosPercent = 100 - ((snowMax - snowRemaining) / (snowMax / 10));
+  snowDiv.style.left = Math.max(0, leftPosPercent) + '%';
+}
+
+function clearSnow(amount) {
+  if (durability <= 0 || snowRemaining <= 0) return 0;
+
+  let actualClear = Math.min(amount, snowRemaining);
+  snowRemaining -= actualClear;
+
+  durability -= 5 + shovelLevel * 2;
+  if (durability < 0) durability = 0;
+
+  money += actualClear * (1 + shovelLevel * 0.2);
+
+  updateUI();
+  moveSnow();
+  checkGameOver();
+
+  if (snowRemaining <= 0) {
+    snowMax = Math.floor(snowMax * 1.5);
+    snowRemaining = snowMax;
+    durability = maxDurability;
+    alert(`Snow cleared! Bigger snow pile appeared!\nSnow size increased to ${snowMax}`);
+    updateUI();
+    moveSnow();
+  }
+
+  return actualClear;
+}
+
+function autoShovelAction() {
+  if (autoShovelLevel <= 0) return;
+  let amt = (clearCost + shovelLevel * 5) * (autoShovelLevel * 0.25);
+  clearSnow(amt);
+}
+
+function restartGame() {
+  if (autoShovelInterval !== null) clearInterval(autoShovelInterval);
+
+  shovelLevel = 0;
+  maxDurability = 100;
+  durability = 100;
+  snowRemaining = 1000;
+  snowMax = 1000;
+  clearCost = 10;
+  money = 0;
+  upgradeLevelCost = 200;
+  upgradeDurabilityCost = 100;
+  upgradeCostCost = 150;
+  upgradeAutoCost = 300;
+  autoShovelLevel = 0;
+  autoShovelInterval = null;
+
+  restartBtn.style.display = "none";
+  updateUI();
+  moveSnow();
+}
+
+clearSnowBtn.onclick = () => clearSnow(clearCost + shovelLevel * 5);
+upgradeLevelBtn.onclick = () => {
+  if (money >= upgradeLevelCost && shovelLevel < shovelLevels.length - 1) {
+    money -= upgradeLevelCost;
+    shovelLevel++;
+    durability = maxDurability;
+    upgradeLevelCost *= 1.8; // easier scaling
+    updateUI();
+    moveSnow();
+    checkGameOver();
+  }
+};
+upgradeDurabilityBtn.onclick = () => {
+  if (money >= upgradeDurabilityCost) {
+    money -= upgradeDurabilityCost;
+    maxDurability += 50 + shovelLevel * 10;
+    durability = maxDurability;
+    upgradeDurabilityCost *= 1.5;
+    updateUI();
+    checkGameOver();
+  }
+};
+upgradeCostBtn.onclick = () => {
+  if (money >= upgradeCostCost) {
+    money -= upgradeCostCost;
+    clearCost = Math.max(1, clearCost * 0.7);
+    upgradeCostCost *= 1.5;
+    updateUI();
+    checkGameOver();
+  }
+};
+upgradeAutoBtn.onclick = () => {
+  if (money >= upgradeAutoCost) {
+    money -= upgradeAutoCost;
+    autoShovelLevel++;
+    upgradeAutoCost *= 2;
+    updateUI();
+    checkGameOver();
+    if (!autoShovelInterval) autoShovelInterval = setInterval(autoShovelAction, 3000);
+  }
+};
+
+restartBtn.onclick = restartGame;
+
+// Initialize
+restartGame();
+</script>
+
+</body>
+</html>
