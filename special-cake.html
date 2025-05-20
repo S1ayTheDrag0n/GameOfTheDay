@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Special Cake Game - Hunger & Thirst</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #222;
+    color: white;
+    text-align: center;
+    user-select: none;
+    margin: 0; padding: 20px;
+  }
+  #stats {
+    max-width: 400px;
+    margin: 0 auto 20px;
+  }
+  .stat {
+    margin-bottom: 15px;
+  }
+  .bar {
+    background: #555;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 30px;
+    position: relative;
+  }
+  .fill {
+    background: #4caf50;
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  #thirst .fill {
+    background: #2196F3;
+  }
+  #hottt .fill {
+    background: #f44336;
+  }
+  .percent {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    bottom: 0;
+    line-height: 30px;
+    font-weight: bold;
+    text-shadow: 0 0 4px black;
+  }
+  button {
+    margin: 5px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background: #4caf50;
+    color: white;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #66bb6a;
+  }
+  #uncapBtn {
+    background: #ff9800;
+  }
+  #uncapBtn:hover {
+    background: #ffb74d;
+  }
+  #statusMsg {
+    margin-top: 15px;
+    font-size: 18px;
+    min-height: 24px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Special Cake Game - Hunger & Thirst</h1>
+
+<div id="stats">
+  <div class="stat" id="hunger">
+    Hunger
+    <div class="bar"><div class="fill" id="hungerFill"></div><span class="percent" id="hungerPercent">100%</span></div>
+  </div>
+  <div class="stat" id="thirst">
+    Thirst
+    <div class="bar"><div class="fill" id="thirstFill"></div><span class="percent" id="thirstPercent">100%</span></div>
+  </div>
+  <div class="stat" id="hottt">
+    HOTTT (Burning)
+    <div class="bar"><div class="fill" id="hotttFill"></div><span class="percent" id="hotttPercent">0%</span></div>
+  </div>
+</div>
+
+<div id="foods">
+  <button id="eatCake">Eat Cake (+30% Food, -10% Water)</button>
+  <button id="eatPizza">Eat Pizza (+25% Food, -5% Water, +10% HOTTT)</button>
+  <button id="drinkWater">Drink Water (+30% Water)</button>
+  <button id="drinkJuice">Drink Juice (+25-35% Water, -5% Food)</button>
+  <button id="eatWatermelon">Eat Watermelon (+20% Food, +10% Water)</button>
+</div>
+
+<button id="uncapBtn">Uncap Hunger/Thirst Over 120%</button>
+
+<div id="statusMsg"></div>
+
+<script>
+  let hunger = 100;
+  let thirst = 100;
+  let hottt = 0;
+
+  let uncapped = false;
+
+  const hungerFill = document.getElementById('hungerFill');
+  const thirstFill = document.getElementById('thirstFill');
+  const hotttFill = document.getElementById('hotttFill');
+
+  const hungerPercent = document.getElementById('hungerPercent');
+  const thirstPercent = document.getElementById('thirstPercent');
+  const hotttPercent = document.getElementById('hotttPercent');
+
+  const statusEl = document.getElementById('statusMsg');
+
+  function updateBars() {
+    if (uncapped) {
+      hungerFill.style.width = Math.min(hunger, 200) + '%';
+      thirstFill.style.width = Math.min(thirst, 200) + '%';
+      hotttFill.style.width = Math.min(hottt, 200) + '%';
+    } else {
+      hungerFill.style.width = Math.min(hunger, 100) + '%';
+      thirstFill.style.width = Math.min(thirst, 100) + '%';
+      hotttFill.style.width = Math.min(hottt, 100) + '%';
+    }
+    hungerPercent.textContent = Math.round(hunger) + '%';
+    thirstPercent.textContent = Math.round(thirst) + '%';
+    hotttPercent.textContent = Math.round(hottt) + '%';
+  }
+
+  function gameOver(message) {
+    alert("Game Over! " + message);
+    resetGame();
+  }
+
+  function resetGame() {
+    hunger = 100;
+    thirst = 100;
+    hottt = 0;
+    uncapped = false;
+    statusEl.textContent = "";
+    updateBars();
+  }
+
+  function checkGameOver() {
+    if (!uncapped) {
+      if (hunger > 120) {
+        gameOver("You ate too much and have to sit on the toilet.");
+        return true;
+      }
+      if (thirst > 120) {
+        gameOver("You drank too much and have to sit on the toilet.");
+        return true;
+      }
+      if (hottt >= 100) {
+        gameOver("You are burning up!");
+        return true;
+      }
+      if (hunger > 115 && thirst > 115) {
+        gameOver("You threw up!");
+        return true;
+      }
+    } else {
+      // uncapped mode ignores hunger/thirst > 120 game overs
+      if (hottt >= 100) {
+        gameOver("You are burning up!");
+        return true;
+      }
+      if (hunger > 115 && thirst > 115) {
+        gameOver("You threw up!");
+        return true;
+      }
+    }
+
+    if (hunger < 30 || thirst < 30) {
+      gameOver("You starved or dehydrated!");
+      return true;
+    }
+
+    return false;
+  }
+
+  function decayStats() {
+    hunger -= 2;
+    thirst -= 2;
+    hottt -= 1;
+
+    if (hunger < 0) hunger = 0;
+    if (thirst < 0) thirst = 0;
+    if (hottt < 0) hottt = 0;
+
+    updateBars();
+    checkGameOver();
+  }
+
+  setInterval(decayStats, 750); // hunger and thirst decay every 750ms
+  setInterval(() => {
+    hottt -= 1;
+    if (hottt < 0) hottt = 0;
+    updateBars();
+    checkGameOver();
+  }, 1000); // hottt decay every 1000ms
+
+  // Food buttons
+  document.getElementById('eatCake').onclick = () => {
+    hunger += 30;
+    thirst -= 10;
+    updateBars();
+    checkGameOver();
+  };
+
+  document.getElementById('eatPizza').onclick = () => {
+    hunger += 25;
+    thirst -= 5;
+    hottt += 10;
+    if (hottt > 100) hottt = 100; // cap HOTTT max 100
+    updateBars();
+    checkGameOver();
+  };
+
+  document.getElementById('drinkWater').onclick = () => {
+    thirst += 30;
+    updateBars();
+    checkGameOver();
+  };
+
+  document.getElementById('drinkJuice').onclick = () => {
+    let juiceWater = 25 + Math.floor(Math.random() * 11); // 25 to 35
+    thirst += juiceWater;
+    hunger -= 5;
+    updateBars();
+    checkGameOver();
+  };
+
+  document.getElementById('eatWatermelon').onclick = () => {
+    hunger += 20;
+    thirst += 10;
+    updateBars();
+    checkGameOver();
+  };
+
+  document.getElementById('uncapBtn').onclick = () => {
+    uncapped = true;
+    statusEl.textContent = "Hunger and Thirst can now exceed 120% without game over. HOTTT game over still applies.";
+    updateBars();
+  };
+
+  // Initialize bars on load
+  updateBars();
+
+</script>
+
+</body>
+</html>
