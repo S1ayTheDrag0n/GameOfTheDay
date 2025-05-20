@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Game 8: Clickable Color Grid</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #222;
+    }
+    #grid {
+      display: grid;
+      width: 100vw;
+      height: 100vh;
+      grid-template-columns: repeat(auto-fill, 40px);
+      grid-auto-rows: 40px;
+    }
+    .cell {
+      background: #888;
+      border: 1px solid #555;
+      box-sizing: border-box;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="grid"></div>
+
+  <script>
+    const grid = document.getElementById('grid');
+
+    // Calculate number of columns and rows based on 40px cells
+    const cols = Math.floor(window.innerWidth / 40);
+    const rows = Math.floor(window.innerHeight / 40);
+
+    // Create grid cells
+    for(let i=0; i < cols * rows; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.addEventListener('click', () => {
+        if(cell.style.backgroundColor === 'rgb(136, 136, 136)' || cell.style.backgroundColor === '') {
+          cell.style.backgroundColor = getRandomBrightColor();
+        } else {
+          cell.style.backgroundColor = '#888';
+        }
+      });
+      grid.appendChild(cell);
+    }
+
+    // Generate random bright color
+    function getRandomBrightColor() {
+      const r = Math.floor(150 + Math.random() * 105);
+      const g = Math.floor(150 + Math.random() * 105);
+      const b = Math.floor(150 + Math.random() * 105);
+      return `rgb(${r},${g},${b})`;
+    }
+
+    // Optional: update grid on resize (not required, but cleaner)
+    window.addEventListener('resize', () => {
+      // For simplicity, just reload page on resize
+      location.reload();
+    });
+  </script>
+</body>
+</html>
