@@ -1,82 +1,114 @@
-<script>
-  const games = [
-    "game1.html",
-    "game2.html",
-    "game3.html",
-    "game4.html",
-    "game5.html",
-    "game6.html",
-    "game7.html",
-    "game8.html",
-    "game9.html",
-    "game10.html"
-  ];
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Game of the Day</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+    }
+    #gameFrame {
+      width: 1000px;
+      height: 700px;
+      border: none;
+      margin-top: 20px;
+    }
+    #warning {
+      display: none;
+      margin-top: 10px;
+      color: red;
+      font-weight: bold;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 Game of the Day</h1>
+  <div id="warning"></div>
+  <iframe id="gameFrame"></iframe>
 
-  function getUTCMidnight() {
-    const now = new Date();
-    return new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0, 0, 0
-    ));
-  }
+  <script>
+    const games = [
+      "game1.html",
+      "game2.html",
+      "game3.html",
+      "game4.html",
+      "game5.html",
+      "game6.html",
+      "game7.html",
+      "game8.html",
+      "game9.html",
+      "game10.html"
+    ];
 
-  function updateWarningAndReload() {
-    const now = new Date();
-    const timeToMidnight = getUTCMidnight() - now;
-
-    const warningBox = document.getElementById("warning");
-
-    if (timeToMidnight <= 10 * 60 * 1000 && timeToMidnight > 1000) {
-      warningBox.innerText = "RELOADING IN 10 MINUTES";
-      warningBox.style.display = "block";
+    function getUTCMidnight() {
+      const now = new Date();
+      return new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        0, 0, 0
+      ));
     }
 
-    if (timeToMidnight <= 1000) {
-      warningBox.innerText = "RELOADING";
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
+    function updateWarningAndReload() {
+      const now = new Date();
+      const timeToMidnight = getUTCMidnight() - now;
+      const warningBox = document.getElementById("warning");
+
+      if (timeToMidnight <= 10 * 60 * 1000 && timeToMidnight > 1000) {
+        warningBox.innerText = "RELOADING IN 10 MINUTES";
+        warningBox.style.display = "block";
+      }
+
+      if (timeToMidnight <= 1000) {
+        warningBox.innerText = "RELOADING";
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      }
     }
-  }
 
-  // Special dates
-  const now = new Date();
-  const utcMonth = now.getUTCMonth() + 1;
-  const utcDay = now.getUTCDate();
-  const utcYear = now.getUTCFullYear();
+    // Special dates
+    const now = new Date();
+    const utcMonth = now.getUTCMonth() + 1;
+    const utcDay = now.getUTCDate();
+    const utcYear = now.getUTCFullYear();
 
-  const isLeapYear = (year) => (
-    (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
-  );
+    const isLeapYear = (year) => (
+      (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
+    );
 
-  let special = null;
-  if ((utcMonth === 12 && (utcDay === 25 || utcDay === 31)) ||
-      (utcMonth === 1 && utcDay === 1)) {
-    special = "special-christmas.html";
-  } else if (utcMonth === 6 && utcDay === 11) {
-    special = "special-cake.html";
-  } else if (utcMonth === 2 && utcDay === 29 && isLeapYear(utcYear)) {
-    special = "special-free.html";
-  }
+    let special = null;
+    if ((utcMonth === 12 && (utcDay === 25 || utcDay === 31)) ||
+        (utcMonth === 1 && utcDay === 1)) {
+      special = "special-christmas.html";
+    } else if (utcMonth === 6 && utcDay === 11) {
+      special = "special-cake.html";
+    } else if (utcMonth === 2 && utcDay === 29 && isLeapYear(utcYear)) {
+      special = "special-free.html";
+    }
 
-  const iframe = document.getElementById("gameFrame");
+    const iframe = document.getElementById("gameFrame");
 
-  if (special) {
-    iframe.src = special;
-  } else {
-    // Regular daily rotation
-    const todayUTC = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate()
-    ));
-    const startDateUTC = new Date(Date.UTC(2025, 0, 1));
-    const diffDays = Math.floor((todayUTC - startDateUTC) / (1000 * 60 * 60 * 24));
-    const gameIndex = diffDays % games.length;
-    iframe.src = games[gameIndex];
-  }
+    if (special) {
+      iframe.src = special;
+    } else {
+      const todayUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate()
+      ));
+      const startDateUTC = new Date(Date.UTC(2025, 0, 1));
+      const diffDays = Math.floor((todayUTC - startDateUTC) / (1000 * 60 * 60 * 24));
+      const gameIndex = diffDays % games.length;
+      iframe.src = games[gameIndex];
+    }
 
-  setInterval(updateWarningAndReload, 1000);
-</script>
+    setInterval(updateWarningAndReload, 1000);
+  </script>
+</body>
+</html>
