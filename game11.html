@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Travel & Sleep Simulator</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1e1e2f;
+    color: #eee;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  #container {
+    width: 450px;
+    background: #2a2a44;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(80,80,120,0.6);
+    padding: 20px 30px 30px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: #7cd1d1;
+  }
+
+  /* Buttons */
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, box-shadow 0.2s ease;
+    user-select: none;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Primary action buttons */
+  #btnSleepWake {
+    background: #1abc9c;
+    color: #fff;
+    margin-right: 10px;
+  }
+  #btnSleepWake:hover:not(:disabled) {
+    background: #16a085;
+    box-shadow: 0 0 10px #16a085aa;
+  }
+  #btnTravel {
+    background: #3498db;
+    color: #fff;
+  }
+  #btnTravel:hover:not(:disabled) {
+    background: #2980b9;
+    box-shadow: 0 0 10px #2980b9aa;
+  }
+
+  /* Upgrade buttons */
+  .upgrade button {
+    background: #555577;
+    color: #ccc;
+    margin-top: 6px;
+    width: 100%;
+  }
+  .upgrade button:hover:not(:disabled) {
+    background: #7cd1d1;
+    color: #222;
+    box-shadow: 0 0 8px #7cd1d1aa;
+  }
+
+  /* Layout */
+  #topButtons {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  #energyBar {
+    background: #444466;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 22px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 0 8px #0008;
+  }
+  #energyFill {
+    background: #7cd1d1;
+    height: 100%;
+    width: 0%;
+    transition: width 0.15s ease;
+  }
+
+  #stats {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    border-bottom: 1px solid #444466;
+    padding-bottom: 14px;
+  }
+
+  #stats span {
+    font-weight: 700;
+    color: #7cd1d1;
+  }
+
+  h2 {
+    border-bottom: 1px solid #444466;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    font-weight: 700;
+    color: #7cd1d1;
+  }
+
+  .upgrade {
+    background: #323250;
+    border-radius: 10px;
+    padding: 15px 15px 10px;
+    margin-bottom: 12px;
+    box-shadow: 0 0 12px #222233aa inset;
+  }
+
+  .upgrade > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .upgrade label {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .upgrade small {
+    color: #aaa;
+    font-weight: 500;
+  }
+
+  .upgrade-controls {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Two buttons for loot upgrade side by side */
+  #btnLootMem, #btnLootMoney {
+    flex: 1;
+  }
+
+  /* Loan button style */
+  #btnLoan {
+    background: #e74c3c;
+    color: #fff;
+  }
+  #btnLoan:hover:not(:disabled) {
+    background: #c0392b;
+    box-shadow: 0 0 12px #c0392baa;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    #container {
+      width: 100%;
+      padding: 15px 20px 20px;
+    }
+    .upgrade-controls {
+      flex-direction: column;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <h1>Travel & Sleep Simulator</h1>
+
+  <div id="topButtons">
+    <button id="btnSleepWake">Sleep</button>
+    <button id="btnTravel">Go Traveling</button>
+  </div>
+
+  <div id="energyBar"><div id="energyFill"></div></div>
+  Energy: <span id="energy">0</span> / <span id="maxEnergy">100</span><br />
+
+  <div id="stats">
+    Memories: <span id="memories">0</span><br />
+    Money: $<span id="money">0</span><br />
+    Loan: $<span id="loanAmount">0</span> (<span id="loanTripsLeft">0</span> trips left)
+  </div>
+
+  <h2>Upgrades</h2>
+
+  <div class="upgrade">
+    <div>
+      <label>Max Energy</label>
+      <span>Level: <span id="maxEnergyLvl">0</span></span>
+    </div>
+    <button id="btnMaxEnergy">Upgrade Max Energy (Memories: 500)</button>
+  </div>
+
+  <div class="upgrade">
+    <div>
+      <label>Energy Regen</label>
+      <span>Level: <span id="energyRegenLvl">0</span></span>
+    </div>
+    <button id="btnEnergyRegen">Upgrade Energy Regen (Memories: 500)</button>
+  </div>
+
+  <div class="upgrade">
+    <div>
+      <label>Slower Energy Drain</label>
+      <span>Level: <span id="slowDrainLvl">0</span></span>
+    </div>
+    <button id="btnSlowDrain">Upgrade Slower Energy Drain (Money: $1000)</button>
+  </div>
+
+  <div class="upgrade">
+    <div>
+      <label>Loot Gain</label>
+      <span>Level: <span id="lootLvl">0</span></span>
+    </div>
+    <div class="upgrade-controls">
+      <button id="btnLootMem">Upgrade Loot Gain (Memories Cost: 750)</button>
+      <button id="btnLootMoney">Upgrade Loot Gain (Money Cost: calculating...)</button>
+    </div>
+  </div>
+
+  <div class="upgrade">
+    <div>
+      <label>Bed</label>
+      <span>Level: <span id="bedLvl">0</span></span>
+    </div>
+    <button id="btnBed">Upgrade Bed (Money: $5000)</button>
+  </div>
+
+  <div class="upgrade">
+    <button id="btnLoan">Take Loan ($1000)</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  // State
+  let energy = 100;
+  let maxEnergy = 100;
+  let memories = 0;
+  let money = 0;
+
+  // Levels
+  let maxEnergyLvl = 0;
+  let energyRegenLvl = 0;
+  let slowDrainLvl = 0;
+  let lootLvl = 0;
+  let bedLvl = 0;
+
+  // Sleep/Travel state
+  let sleeping = false;
+
+  // Constants
+  const baseEnergyRegen = 3; // per 0.52s
+  const baseEnergyDrainRate = 2 / 0.33; // per second when traveling (2 energy per 0.33s)
+  const baseTravelMoneyChance = 0.45;
+  const baseTravelMoneyMin = 1;
+  const baseTravelMoneyMax = 25;
+  const loanAmountConst = 1000;
+  const loanInterest = 1.25; // 125% repayment
+
+  // Loan state
+  let loan = 0;
+  let loanTripsLeft = 0;
+
+  // DOM Elements
+  const energySpan = document.getElementById('energy');
+  const maxEnergySpan = document.getElementById('maxEnergy');
+  const memoriesSpan = document.getElementById('memories');
+  const moneySpan = document.getElementById('money');
+  const loanAmountSpan = document.getElementById('loanAmount');
+  const loanTripsLeftSpan = document.getElementById('loanTripsLeft');
+  const energyFill = document.getElementById('energyFill');
+
+  // Buttons
+  const btnSleepWake = document.getElementById('btnSleepWake');
+  const btnTravel = document.getElementById('btnTravel');
+
+  const btnMaxEnergy = document.getElementById('btnMaxEnergy');
+  const btnEnergyRegen = document.getElementById('btnEnergyRegen');
+  const btnSlowDrain = document.getElementById('btnSlowDrain');
+  const btnLootMem = document.getElementById('btnLootMem');
+  const btnLootMoney = document.getElementById('btnLootMoney');
+  const btnBed = document.getElementById('btnBed');
+  const btnLoan = document.getElementById('btnLoan');
+
+  // Level spans
+  const maxEnergyLvlSpan = document.getElementById('maxEnergyLvl');
+  const energyRegenLvlSpan = document.getElementById('energyRegenLvl');
+  const slowDrainLvlSpan = document.getElementById('slowDrainLvl');
+  const lootLvlSpan = document.getElementById('lootLvl');
+  const bedLvlSpan = document.getElementById('bedLvl');
+
+  // Update UI function
+  function updateUI() {
+    energy = Math.min(energy, maxEnergy);
+    energySpan.textContent = Math.floor(energy);
+    maxEnergySpan.textContent = maxEnergy;
+    memoriesSpan.textContent = Math.floor(memories);
+    moneySpan.textContent = Math.floor(money);
+
+    loanAmountSpan.textContent = loan > 0 ? `$${loan.toFixed(0)}` : "0";
+    loanTripsLeftSpan.textContent = loanTripsLeft;
+
+    maxEnergyLvlSpan.textContent = maxEnergyLvl;
+    energyRegenLvlSpan.textContent = energyRegenLvl;
+    slowDrainLvlSpan.textContent = slowDrainLvl;
+    lootLvlSpan.textContent = lootLvl;
+    bedLvlSpan.textContent = bedLvl;
+
+    // Energy bar fill
+    energyFill.style.width = (energy / maxEnergy * 100) + '%';
+
+    // Button enables/disables
+    btnSleepWake.disabled = false;
+    btnTravel.disabled = sleeping || energy <= 0;
+
+    btnMaxEnergy.disabled = memories < 500;
+    btnEnergyRegen.disabled = memories < 500;
+    btnSlowDrain.disabled = money < 1000;
+    btnLootMem.disabled = memories < 750;
+    btnLootMoney.disabled = money < getLootMoneyCost();
+    btnBed.disabled = money < 5000;
+
+    btnLoan.disabled = loan > 0;
+
+    btnSleepWake.textContent = sleeping ? "Wake Up" : "Sleep";
+  }
+
+  // Calculate loot money cost (scales by lootLvl)
+  function getLootMoneyCost() {
+    return Math.floor(750 + lootLvl * 375);
+  }
+
+  // Update lootMoney button text every update
+  function updateLootMoneyText() {
+    btnLootMoney.textContent = `Upgrade Loot Gain (Money Cost: $${getLootMoneyCost()})`;
+  }
+
+  // Energy Regen (called every 520ms)
+  function energyRegenTick() {
+    if (sleeping) {
+      // Regenerate energy
+      let regenAmount = baseEnergyRegen * (1 + energyRegenLvl * 0.5);
+      energy += regenAmount;
+      if (energy > maxEnergy) energy = maxEnergy;
+    }
+    updateUI();
+  }
+
+  // Energy drain while traveling (called every 330ms)
+  function energyDrainTick() {
+    if (!sleeping && energy > 0) {
+      let drainFactor = 1 - 0.08 * slowDrainLvl;
+      if (drainFactor < 0) drainFactor = 0;
+      let drainAmount = (2 * drainFactor);
+      energy -= drainAmount;
+      if (energy < 0) energy = 0;
+
+      if (energy === 0) {
+        // Auto stop traveling on energy 0
+        sleeping = true;
+        updateUI();
+      }
+    }
+    updateUI();
+  }
+
+  // Traveling event - called every 1.3s while traveling
+  function travelEvent() {
+    if (sleeping) return;
+    if (energy <= 0) {
+      sleeping = true;
+      updateUI();
+      return;
+    }
+
+    // Gain loot (memories or money)
+    // 50% chance memories or money (more loot lvl means more loot)
+    const lootChance = 0.5 + lootLvl * 0.02;
+    if (Math.random() < lootChance) {
+      // Memories loot (range 15-25 + lootLvl * 3)
+      let memGain = Math.floor(15 + lootLvl * 3 + Math.random() * 10);
+      memories += memGain;
+    } else {
+      // Money loot (range $10-30 + lootLvl * 5)
+      let moneyGain = Math.floor(10 + lootLvl * 5 + Math.random() * 20);
+      money += moneyGain;
+    }
+
+    // Travel Money chance (special money chance)
+    if (Math.random() < baseTravelMoneyChance) {
+      // Extra money $1-$25 (scaled by bed lvl)
+      let extraMoney = Math.floor(baseTravelMoneyMin + Math.random() * (baseTravelMoneyMax - baseTravelMoneyMin + 1));
+      extraMoney += bedLvl * 5;
+      money += extraMoney;
+    }
+
+    // Loan repayment per trip (if loan taken)
+    if (loan > 0) {
+      loanTripsLeft--;
+      if (loanTripsLeft <= 0) {
+        money -= loan * loanInterest;
+        loan = 0;
+        loanTripsLeft = 0;
+      }
+    }
+
+    updateUI();
+  }
+
+  // Button Listeners
+
+  btnSleepWake.addEventListener('click', () => {
+    sleeping = !sleeping;
+    updateUI();
+  });
+
+  btnTravel.addEventListener('click', () => {
+    if (!sleeping && energy > 0) {
+      travelEvent();
+    }
+  });
+
+  btnMaxEnergy.addEventListener('click', () => {
+    if (memories >= 500) {
+      memories -= 500;
+      maxEnergyLvl++;
+      maxEnergy += 15;
+      energy += 15; // also add current energy so player doesn't lose energy on upgrade
+      updateUI();
+    }
+  });
+
+  btnEnergyRegen.addEventListener('click', () => {
+    if (memories >= 500) {
+      memories -= 500;
+      energyRegenLvl++;
+      updateUI();
+    }
+  });
+
+  btnSlowDrain.addEventListener('click', () => {
+    if (money >= 1000) {
+      money -= 1000;
+      slowDrainLvl++;
+      updateUI();
+    }
+  });
+
+  btnLootMem.addEventListener('click', () => {
+    if (memories >= 750) {
+      memories -= 750;
+      lootLvl++;
+      updateUI();
+      updateLootMoneyText();
+    }
+  });
+
+  btnLootMoney.addEventListener('click', () => {
+    let cost = getLootMoneyCost();
+    if (money >= cost) {
+      money -= cost;
+      lootLvl++;
+      updateUI();
+      updateLootMoneyText();
+    }
+  });
+
+  btnBed.addEventListener('click', () => {
+    if (money >= 5000) {
+      money -= 5000;
+      bedLvl++;
+      updateUI();
+    }
+  });
+
+  btnLoan.addEventListener('click', () => {
+    if (loan === 0) {
+      loan = loanAmountConst;
+      loanTripsLeft = 20; // trips to repay loan
+      money += loan;
+      updateUI();
+    }
+  });
+
+  // Initial UI update
+  updateLootMoneyText();
+  updateUI();
+
+  // Timers
+  setInterval(energyRegenTick, 520);
+  setInterval(energyDrainTick, 330);
+  // Auto travel event every 1.3 seconds if traveling
+  setInterval(() => {
+    if (!sleeping && energy > 0) {
+      travelEvent();
+    }
+  }, 1300);
+})();
+</script>
+</body>
+</html>
