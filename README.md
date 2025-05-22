@@ -1,5 +1,5 @@
 # GameOfTheDay
-# This repository has 10 games.
+# This repository has **11** games.
 # Every day they change.
 # There are special dates.
 # 2 of them are
