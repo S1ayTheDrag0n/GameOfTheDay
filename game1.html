@@ -75,8 +75,8 @@
     speed: 5,
     dx: 0,
     dy: 0,
-    health: 100,
-    maxHealth: 100,
+    health: 200,
+    maxHealth: 200,
   };
 
   // Controls state
@@ -105,7 +105,8 @@
     { name: "Fast", speed: 3, radius: 12, health: 1, color: "orange" },
     { name: "Tank", speed: 1, radius: 28, health: 6, color: "darkred" },
     { name: "Normal", speed: 1.5, radius: 18, health: 3, color: "red" },
-    { name: "Runner", speed: 4, radius: 10, health: 1, color: "yellow" }
+    { name: "Runner", speed: 4, radius: 10, health: 1, color: "yellow" },
+    { name: "Speedrunner", speed: 5, radius: 16, health: 1, color: "purple" }
   ];
 
   // Bullet class
@@ -235,10 +236,12 @@
       // Pick random enemy type, weighted to normal type more often
       let typeChance = Math.random();
       let type;
-      if (typeChance < 0.1) {
+      if (typeChance < 0.12) {
         type = enemyTypes[1]; // Tank (6 health)
       } else if (typeChance < 0.25) {
         type = enemyTypes[0]; // Fast
+      } else if (typeChance < 0.04) {
+        type = enemyTypes[4]; // Fast
       } else if (typeChance < 0.3) {
         type = enemyTypes[3]; // Runner (fastest)
       } else {
@@ -296,7 +299,7 @@
             }
 
             // Increase difficulty every 50 points
-            if (score % 50 === 0) {
+            if (score % 100 === 0) {
               if (enemySpawnInterval > 500) enemySpawnInterval -= 100;
               if (enemiesPerSpawn < 5) enemiesPerSpawn++; // Spawn more enemies
               clearInterval(spawnInterval);
@@ -346,8 +349,8 @@
   restartBtn.addEventListener('click', () => {
     // Reset everything
     score = 0;
-    player.health = 100;
-    player.maxHealth = 100;
+    player.health = 200;
+    player.maxHealth = 200;
     player.x = WIDTH / 2;
     player.y = HEIGHT / 2;
     bullets = [];
